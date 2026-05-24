@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Traffic</title>
+		<link rel="stylesheet" href="index.css">
+		<link rel="stylesheet" href="lightSizeEditor.css">
+	</head>
+	<body>
+		<canvas id="gameCanvas"></canvas>
+		
+		<div id="gameView" class="hidden">
+			<div id="fps"></div>
+			<div id="mousePos"></div>
+			<div id="timeLeft"></div>
+			<div id="score"></div>
+			<div id="pause" class="inPause"></div>
+			<div id="zoomContainer" class="hidden">
+				<div id="zoomInc"></div>
+				<div id="zoomDec"></div>
+			</div>
+			<div id="restart"></div>
+			<div id="lightTurn">00</div>
+			<div id="handPanel"></div>
+		</div>
+
+		<div id="lightSizeEditor" class="hidden">
+			<div id="lightSizeEditor__backdrop"></div>
+			<div id="lightSizeEditor__modal">
+				<div id="lightSizeEditor__sizeSelector">
+				<label>Taille :
+					<select id="lightSizeEditor__select">
+					<option value="0">4 bits</option>
+					<option value="1">8 bits</option>
+					<option value="2">16 bits</option>
+					<option value="3">32 bits</option>
+					</select>
+				</label>
+				</div>
+				<div id="lightSizeEditor__bits"></div>
+				<div id="lightSizeEditor__actions">
+				<button id="lightSizeEditor__cancel">Annuler</button>
+				<button id="lightSizeEditor__confirm">Confirmer</button>
+				</div>
+			</div>
+		</div>
+
+		<script>
+			window.IMG_ROOT_PATH = "";
+			window.DEBUG = true;
+
+			import("/index.ts").then(m => {m.startGame()});
+		</script>
+	</body>
+</html>

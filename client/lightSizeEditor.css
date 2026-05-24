@@ -1,0 +1,96 @@
+#lightSizeEditor {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+}
+
+#lightSizeEditor__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+#lightSizeEditor__modal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #1e1e2e;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 320px;
+  max-width: 90vw;
+}
+
+#lightSizeEditor__sizeSelector {
+  color: #cdd6f4;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#lightSizeEditor__select {
+  background: #313244;
+  color: #cdd6f4;
+  border: 1px solid #585b70;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+#lightSizeEditor__bits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lightSizeEditor__bit {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid #585b70;
+  transition: background 0.15s, border-color 0.15s;
+  user-select: none;
+}
+
+.lightSizeEditor__bit--off {
+  background: #e53935;
+  border-color: #b71c1c;
+}
+
+.lightSizeEditor__bit--on {
+  background: #43a047;
+  border-color: #1b5e20;
+}
+
+#lightSizeEditor__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+#lightSizeEditor__actions button {
+  padding: 6px 18px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+#lightSizeEditor__cancel {
+  background: #313244;
+  color: #cdd6f4;
+}
+
+#lightSizeEditor__confirm {
+  background: #89b4fa;
+  color: #1e1e2e;
+  font-weight: bold;
+}
