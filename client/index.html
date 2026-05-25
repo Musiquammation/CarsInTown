@@ -25,26 +25,22 @@
 			<div id="handPanel"></div>
 		</div>
 
-		<div id="lightSizeEditor" class="hidden">
-			<div id="lightSizeEditor__backdrop"></div>
-			<div id="lightSizeEditor__modal">
-				<div id="lightSizeEditor__sizeSelector">
-				<label>Taille :
-					<select id="lightSizeEditor__select">
-					<option value="0">4 bits</option>
-					<option value="1">8 bits</option>
-					<option value="2">16 bits</option>
-					<option value="3">32 bits</option>
-					</select>
-				</label>
-				</div>
-				<div id="lightSizeEditor__bits"></div>
-				<div id="lightSizeEditor__actions">
-				<button id="lightSizeEditor__cancel">Annuler</button>
-				<button id="lightSizeEditor__confirm">Confirmer</button>
+		<div id="lightSelector" class="hidden">
+				<div class="ls-panel">
+					<div class="ls-row">
+						<label>Direction</label>
+						<select id="ls-direction"></select>
+					</div>
+					<div class="ls-row">
+						<label>Lumières</label>
+						<div class="ls-dots"></div>
+					</div>
+					<div class="ts-actions">
+						<button id="ls-cancel">Annuler</button>
+						<button id="ls-ok" class="ts-ok">OK</button>
+					</div>
 				</div>
 			</div>
-		</div>
 
 		<script>
 			window.IMG_ROOT_PATH = "";

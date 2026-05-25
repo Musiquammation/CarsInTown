@@ -6,9 +6,8 @@ export enum HandSelection {
 	MOVE,
 
 	TURN,
-	PRIORITY,
-	LIGHT,
-	ALTERN
+	YIELD,
+	LIGHT
 };
 
 const zoomContainerHtml = document.getElementById("zoomContainer")!;
@@ -23,8 +22,7 @@ export const HAND_SELECTION_ICONS = [
 
 	'turn',
 	'yield',
-	'light_green',
-	'filter_front'
+	'light_green'
 ];
 
 class HandSelector {

@@ -1,3 +1,4 @@
 export function isTouchDevice() {
-	return navigator.maxTouchPoints > 0;
+	// return navigator.maxTouchPoints > 0;
+	return true;
 }

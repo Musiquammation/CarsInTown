@@ -7,87 +7,82 @@ import { roadfn } from "./roadfn";
 
 export enum RoadType {
 	/**
-	 * [+3]: locked
+	 * +00: (type)
+	 * +04: code
+	 * +15: (taken)
 	 */
-	VOID = 0,
+	VOID,
 
 	/**
-	 * No data
+	 * +00: (type)
+	 * +04: right?
+	 * +05: up?
+	 * +06: left?
+	 * +07: down?
+	 * +08: weight [128 values]
+	 * +15: (taken)
 	 */
 	ROAD,
 
 	/**
-	 * [+3,+4,+5]: type
-	 * [+6, +7]: origin direction
-	*/
-	TURN,
-	
-	
-	/**
-	 * [+6, +7]: origin direction
+	 * +00: (type)
+	 * +04: color
+	 * +07: symbol
+	 * +12: (empty)
+	 * +15: (taken)
 	 */
-	PRIORITY,
-
+	TARGET,
 
 	/**
-	 * [+3]: 1=green ; 0=red
-	 * [+4, +5]: cycle size {00=4, 01=8, 10=16, 11=32}
-	 * [+6, +7]: origin direction
+	 * +00: (type)
+	 * +04: first:  side
+	 * +07: second: side
+	 * +10: first:  direction
+	 * +12: second: direction
+	 * +14: (empty)
+	 * +15: (taken)
+	 * 
+	 * 
+	 * for side:
+	 *   0: nothing
+	 *   1: front
+	 *   2: right
+	 *   3: left
+	 *   4: front-right
+	 *   5: front-left
+	 *   6: left-right
+	 *   7: all
+	 */
+	DIRECTION,
+
+	/**
+	 * +00: (type)
+	 * +04: (empty)
+	 * +06: direction
+	 * +08: (empty)
+	 * +15: (taken)
+	 */
+	YIELD,
+
+	/**
+	 * +00: (type)
+	 * +04: bits
+	 * +12: direction
+	 * +14: (empty)
+	 * +15: (taken)
 	 */
 	LIGHT,
-
-	/**
-	 * [+3, +4]: code {00=front, 01=right, 10=front, 11=left}
-	 * [+5]: share
-	 * [+6, +7]: origin direction
-	 */
-	ALTERN,
-
-	/**
-	 * [+3,+4,+5]: color
-	 * [+6,+7]: direction
-	 */
-	SPAWNER,
-
-	/**
-	 * [+3,+4,+5]: color
-	 */
-	CONSUMER,
 }
 
-
-export enum TurnDirection {
-	RIGHT,
-	LEFT,
-	ALL_0,
-	ALL_1,
-	ALL_2,
-	ALL_3,
-	ALL_4,
-	ALL_5,
-}
+export const ROADTYPES_COUNT = Object.keys(RoadType).length / 2;
 
 
-
-
-export function generateExtraData(road: road_t): any {
-	switch (roadfn.getType(road)) {
-	case RoadType.VOID:
-		return null;
-	
-	case RoadType.ROAD:
-		return null;
-
-	case RoadType.TURN:
-		return null;
-
-	default:
-		throw new Error("Invalid road type");
-	}
-}
-
-
-export function drawRoad(ctx: CanvasRenderingContext2D, iloader: ImageLoader, road: road_t) {
+export function drawRoad(
+	ctx: CanvasRenderingContext2D,
+	iloader: ImageLoader,
+	road: road_t,
+	lightStep: number
+) {
 	function drawImage(name: string, angle: number, flip = {x: false, y: false, color: -1}) {
 		ctx.save();
 		ctx.translate(0.5, 0.5);
@@ -111,40 +106,19 @@ export function drawRoad(ctx: CanvasRenderingContext2D, iloader: ImageLoader, ro
 
 	case RoadType.ROAD:
 	{
-		ctx.fillStyle = "#877";
+		ctx.fillStyle = "#fff";
 		ctx.fillRect(0, 0, 1, 1);
 		return;
 	}
 
-	case RoadType.TURN:
+	case RoadType.DIRECTION:
 	{
-		const type: TurnDirection = (road >> 3) & 0x7;
-		const direction = Math.PI/2 * ((road >> 6) & 0x3);
-
-		switch (type) {
-		case TurnDirection.RIGHT:
-			drawImage('turn', direction);
-			break;
-
-		case TurnDirection.LEFT:
-			drawImage('turn', direction, {x: false, y: true, color: -1});
-			break;
-			
-		case TurnDirection.ALL_0:
-		case TurnDirection.ALL_1:
-		case TurnDirection.ALL_2:
-		case TurnDirection.ALL_3:
-		case TurnDirection.ALL_4:
-		case TurnDirection.ALL_5:
-			drawImage('all' + (type - TurnDirection.ALL_0), direction);
-			break;
-
-		}
-
+		ctx.fillStyle = "#f00";
+		ctx.fillRect(0, 0, 1, 1);
 		return;
 	}
 
-	case RoadType.PRIORITY:
+	case RoadType.YIELD:
 	{
 		drawImage('yield', Math.PI/2 * ((road >> 6) & 0x3));
 		break;
@@ -152,53 +126,20 @@ export function drawRoad(ctx: CanvasRenderingContext2D, iloader: ImageLoader, ro
 
 	case RoadType.LIGHT:
 	{
-		drawImage(road & (1<<3) ? 'light_green' : 'light_red',
-			Math.PI/2 * ((road >> 6) & 0x3));
+		const green = road & (1<<(lightStep+4));
+		drawImage(green ? 'light_green' : 'light_red',
+			Math.PI/2 * ((road >> 12) & 0x3));
 		break;
 	}
 
-	case RoadType.ALTERN:
+	case RoadType.TARGET:
 	{
-		let path = (road & (1 << 5)) ? 'filter_share_' : 'filter_';
-		let flip = false;
-
-		switch ((road >> 3) & 0x3) {
-		case 0:
-		case 2:
-			path += 'front';
-			flip = false;
-			break;
-
-		case 1:
-			path += 'turn';
-			flip = false;
-			break;
-
-		case 3:
-			path += 'turn';
-			flip = true;
-			break;
-
-		}
+		const color: CarColor = (road >> 4) & 0x7;
 		const direction: Direction = (road >> 6) & 0x3;
-		drawImage(path, direction * Math.PI/2, {x: false, y: flip, color: -1});
+		drawImage('consumer', direction * Math.PI/2, {x: false, y: false, color: color});
 		break;
 	}
 
-	case RoadType.SPAWNER:
-	{
-		const color: CarColor = (road >> 3) & 0x7;
-		const direction: Direction = (road >> 6) & 0x3;
-		drawImage('spawner', direction * Math.PI/2, {x: false, y: false, color: color});
-		break;
-	}
-
-	case RoadType.CONSUMER:
-	{
-		const color: CarColor = (road >> 3) & 0x7;
-		drawImage('consumer', 0, {x: false, y: false, color: color});
-		break;
-	}
 
 	default:
 		throw new Error("Invalid road type");
@@ -208,16 +149,26 @@ export function drawRoad(ctx: CanvasRenderingContext2D, iloader: ImageLoader, ro
 
 export function onRoadRotation(road: road_t): road_t | null {
 	switch (roadfn.getType(road)) {
-	case RoadType.TURN:
-	case RoadType.PRIORITY:
-	case RoadType.LIGHT:
-	case RoadType.ALTERN:
-	{
+	case RoadType.YIELD: {
 		let dir = (road >> 6) & 0x3;
 		dir++;
 		dir &= 0x3;
 
 		road = (road & ~(0x3 << 6)) | (dir << 6);
+		return road;
+	}
+
+	case RoadType.DIRECTION: {
+		/// TODO: direction rotation
+		return null;
+	}
+
+	case RoadType.LIGHT: {
+		let dir = (road >> 12) & 0x3;
+		dir++;
+		dir &= 0x3;
+
+		road = (road & ~(0x3 << 12)) | (dir << 12);
 		return road;
 	}
 
@@ -230,28 +181,6 @@ export function onRoadRotation(road: road_t): road_t | null {
 
 export function onRoadScroll(road: road_t, delta: number): road_t | 'light' | null {
 	switch (roadfn.getType(road)) {
-	case RoadType.TURN:
-	{
-		let type = (road >> 3) & 0x7;
-		if (delta > 0) {
-			type--;
-			if (type < 0) {
-				type = 7;
-			}
-		} else {
-			type++;
-			if (type >= 8) {
-				type = 0;
-			}
-		}
-
-		road = (road & ~(0x7 << 3)) | ((type << 3));
-		return road;
-	}
-
-	case RoadType.ALTERN:
-		return road ^ (1<<5); // toggle share
-
 	case RoadType.LIGHT:
 		return 'light';
 

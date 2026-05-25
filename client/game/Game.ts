@@ -11,8 +11,9 @@ import { MapConstructor } from "./MapConstructor";
 import { PauseElement } from "../handler/PauseElement";
 import { HandSelection, handSelector } from "./HandSelector";
 import { produceStatsPanel } from "./produceStatsPanel";
-import { onRoadRotation, onRoadScroll, RoadType, TurnDirection } from "./roadtypes";
+import { onRoadRotation, onRoadScroll, RoadType, ROADTYPES_COUNT } from "./roadtypes";
 import { road_t } from "./road_t";
+import { lightSelector } from "../handler/lightSelector";
 
 
 const timeLeftDiv = document.getElementById("timeLeft")!;
@@ -94,18 +95,7 @@ export class Game extends GameState {
 			}
 
 
-			if (hasRight && !hasLeft) {
-				map.setRoad(xp, yp, RoadType.TURN |
-					(TurnDirection.LEFT  << 3) |
-					(rotateDirectionToLeft(dir) << 6));
-
-
-			} else if (!hasRight && hasLeft) {
-				map.setRoad(xp, yp, RoadType.TURN |
-					(TurnDirection.RIGHT  << 3) |
-					(rotateDirectionToRight(dir) << 6));
-
-			}
+			/// TODO: automatic directions
 
 
 			map.setRoad(x, y, road);
@@ -237,6 +227,7 @@ export class Game extends GameState {
 			mouseScreenY: number,
 		) => {
 			let roadtype: RoadType | null = null;
+			let extraData = 0;
 
 			const ix = Math.floor(x);
 			const iy = Math.floor(y);
@@ -286,21 +277,16 @@ export class Game extends GameState {
 			}
 
 			case HandSelection.TURN:
-				roadtype = RoadType.TURN;
+				roadtype = RoadType.DIRECTION;
 				break;
 
-			case HandSelection.PRIORITY:
-				roadtype = RoadType.PRIORITY;
+			case HandSelection.YIELD:
+				roadtype = RoadType.YIELD;
 				break;
 
 			case HandSelection.LIGHT:
 				roadtype = RoadType.LIGHT;
 				break;
-
-			case HandSelection.ALTERN:
-				roadtype = RoadType.ALTERN;
-				break;
-
 			}
 
 			if (roadtype !== null) {
@@ -315,7 +301,7 @@ export class Game extends GameState {
 						}
 
 					} else if (next === 'light') {
-						this.setLight(ix, iy, road);
+						this.setLight(ix, iy);
 						
 					} else {
 						gmap.setRoad(ix, iy, next);
@@ -448,7 +434,7 @@ export class Game extends GameState {
 			const road = gmap.getRoad(x, y);
 			if (rightDown) {
 				let type = (roadfn.getType(road) + 1);
-				if (type >= RoadType.SPAWNER) {
+				if (type >= ROADTYPES_COUNT) {
 					type = 1;
 				}
 
@@ -459,8 +445,7 @@ export class Game extends GameState {
 
 			const roadScroll = onRoadScroll(road, e.deltaY);
 			if (roadScroll === 'light') {
-				this.setLight(x, y, road);
-
+				this.setLight(x, y);
 			} else if (roadScroll) {
 				gmap.setRoad(x, y, roadScroll);
 			} else if (!leftDown && !rightDown) {
@@ -518,38 +503,19 @@ export class Game extends GameState {
 
 		const x = Math.floor(this.lastMouseX);
 		const y = Math.floor(this.lastMouseY);
-		const current = gmap.getRoad(x, y);
 		
 		if (input.first('turnRight')) {
-			const road = RoadType.TURN | 
-				(TurnDirection.RIGHT << 3) |
-				(current & (3<<6));
-
-			gmap.setRoad(x, y, road);	
+			/// TODO: turn right
 
 		} else if (input.first('turnLeft')) {
-			const road = RoadType.TURN | 
-				(TurnDirection.LEFT << 3) |
-				(current & (3<<6));
-
-			gmap.setRoad(x, y, road);
+			/// TODO: turn left
 			
 		} else if (input.first('yieldIns')) {
-			const road = RoadType.PRIORITY | 
-				(current & (3<<6));
-
+			const road = RoadType.YIELD;
 			gmap.setRoad(x, y, road);
 
 		} else if (input.first('light')) {
-			const road = RoadType.LIGHT | 
-				(current & (3<<6));
-
-			gmap.setRoad(x, y, road);
-
-		} else if (input.first('altern')) {
-			const road = RoadType.ALTERN | 
-				(current & (3<<6));
-
+			const road = RoadType.LIGHT;
 			gmap.setRoad(x, y, road);
 
 		}
@@ -586,8 +552,20 @@ export class Game extends GameState {
 	}
 
 
-	private setLight(x: number, y: number, road: road_t) {
-		/// TODO: lights
+	private setLight(x: number, y: number) {
+		const gmap = this.gameMap;
+		if (!gmap)
+			return;
+
+		const road = gmap.getRoad(x, y);
+		if (roadfn.getType(road) === RoadType.LIGHT) {
+			lightSelector.take(road, data => {
+				if (data) {
+					gmap.setRoad(x, y, data | RoadType.LIGHT);
+				}
+			});
+			
+		}
 	}
 
 

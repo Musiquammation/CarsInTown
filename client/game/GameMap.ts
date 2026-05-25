@@ -4,6 +4,7 @@ import { Car } from "./Car";
 import { road_t } from "./road_t";
 import { drawRoad, RoadType } from "./roadtypes";
 import { roadfn } from "./roadfn";
+import { Target } from "./Target";
 
 
 export class GameMap {
@@ -18,10 +19,15 @@ export class GameMap {
 		}
 	}
 
+	static readonly LIGHT_COULDOWN = 180;
+
 	size: number;
 	
-	private cars = new Map<bigint, Car>();
 	private grid: Uint16Array;
+	private cars = new Map<bigint, Car>();
+	private targets = new Map<bigint, Target>();
+	private lightStep = 0;
+	private lightCooldown = 0;
 
 	constructor(size: number) {
 		this.size = size;
@@ -32,7 +38,7 @@ export class GameMap {
 	getRoad(x: number, y: number): road_t {
 		if (x < 0 || y < 0 || x >= this.size || y >= this.size)
 			return 0;
-		
+
 		const road = this.grid[this.getIdx(x, y)];
  		return road;
 	}
@@ -45,8 +51,7 @@ export class GameMap {
 		const currentRoadType = roadfn.getType(currentRoad);
 		
 		switch (currentRoadType) {
-		case RoadType.SPAWNER:
-		case RoadType.CONSUMER:
+		case RoadType.TARGET:
 			return;
 
 		case RoadType.VOID:
@@ -55,9 +60,20 @@ export class GameMap {
 		}
 
 		const idx = this.getIdx(x, y);
-		this.grid[idx] = road;
+		if (this.grid[idx] & (1<<15)) {
+			this.grid[idx] = road | (1<<15);
+		} else {
+			this.grid[idx] = road & ~(1<<15);
+		}
 	}
 
+	forceRoad(x: number, y: number, road: road_t) {
+		if (x < 0 || y < 0 || x >= this.size || y >= this.size)
+			return;
+
+		const idx = this.getIdx(x, y);
+		this.grid[idx] = road;
+	}
 	
 
 
@@ -75,7 +91,7 @@ export class GameMap {
 				
 				ctx.save();
 				ctx.translate(x, y);
-				drawRoad(ctx, iloader, obj);
+				drawRoad(ctx, iloader, obj, this.lightStep);
 				ctx.restore();
 				
 			}
@@ -100,21 +116,15 @@ export class GameMap {
 
 
 	
-	private static carKey(x: number, y: number) {
+	private static mapKey(x: number, y: number) {
 		const bx = BigInt(x >>> 0);
 		const by = BigInt(y >>> 0);
 		return (bx << 32n) | by;
 	}
 
-	private static decodeCarKey(k: bigint) {
-		const x = Number(k >> 32n);
-		const y = Number(k & 0xffffffffn);
-
-		return { x, y };
-	}
 
 	getCar(x: number, y: number) {
-		return this.cars.get(GameMap.carKey(x, y));
+		return this.cars.get(GameMap.mapKey(x, y));
 	}
 
 	moveCars() {
@@ -139,7 +149,7 @@ export class GameMap {
 			car.move();
 
 			// Generate the new key based on the updated position
-			const newKey = GameMap.carKey(car.x, car.y);
+			const newKey = GameMap.mapKey(car.x, car.y);
 
 			// Collision detection
 			if (nextCars.has(newKey)) {
@@ -155,6 +165,19 @@ export class GameMap {
 
 		// 3. Swap the old map with the fully updated new one
 		this.cars = nextCars;
+	}
+	
+
+	addTarget(x: number, y: number, target: Target) {
+		this.targets.set(GameMap.mapKey(x, y), target);
+	}
+
+	moveLightStep() {
+		this.lightCooldown++;
+		if (this.lightCooldown >= GameMap.LIGHT_COULDOWN) {
+			this.lightCooldown -= GameMap.LIGHT_COULDOWN;
+			this.lightStep = (this.lightStep + 1) % 8;
+		}
 	}
 
 	reset() {
