@@ -1,10 +1,10 @@
 import { CarColor } from "./CarColor";
-import { Direction, getAttach } from "./Direction";
+import { Direction, getAttach, getDirectionDelta, rotateDirectionToLeft, rotateDirectionToRight } from "./Direction";
 import { Game } from "./Game";
 import { CAR_LINE, CAR_SIZE } from "./CAR_SIZE";
 import { ImageLoader } from "../handler/ImageLoader";
-import { road_t } from "./road_t";
 import { getDanger } from "./getDanger";
+import { Target } from "./Target";
 
 
 const RENDER_DISTANCE = 32;
@@ -30,21 +30,21 @@ export class Car {
 	
 	x: number;
 	y: number;
-	step = 0;
-	score: number;
+	target: Target;
+	step = 0.5;
 
 	constructor(
 		x: number,
 		y: number,
+		target: Target,
 		direction: Direction,
-		color: CarColor,
-		score: number
+		color: CarColor
 	) {
 		this.x = x;
 		this.y = y;
+		this.target = target;
 		this.direction = direction;
 		this.color = color;
-		this.score = score;
 	}
 
 	getCoords() {
@@ -116,8 +116,6 @@ export class Car {
 		ctx.drawImage(iloader.get('car', this.color),
 			-CAR_SIZE/2, -CAR_LINE/2, CAR_SIZE, CAR_LINE);
 
-		ctx.fillStyle = "black";
-		ctx.font = "1px consolas";
 
 		ctx.restore();
 	}
@@ -145,6 +143,51 @@ export class Car {
 	}
 	
 	move() {
+		this.publicSpeed = this.realSpeed;
+
+		this.step += this.realSpeed;
+
+		if (this.step < 1) {
+			return false;
+		}
+
+
+		switch (this.state) {
+		case 'front':
+			break;
+
+		case 'turn-right':
+			this.direction = rotateDirectionToRight(this.direction);
+			break;
+
+		case 'turn-left':
+			this.direction = rotateDirectionToLeft(this.direction);
+			break;
+		}
+
+
+		const {x, y} = getDirectionDelta(this.direction);
+		this.x += x;
+		this.y += y;
 		
+
+		if (
+			this.x === this.target.x &&
+			this.y === this.target.y
+		) {
+			this.target.absorbeCar();
+			return true;
+		}
+
+		
+		return false;
+	}
+
+	getSpeedLimit() {
+		return this.speedLimit;
+	}
+
+	getSpeed() {
+		return this.publicSpeed;
 	}
 }

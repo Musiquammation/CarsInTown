@@ -1,3 +1,4 @@
+import { CarColor } from "../game/CarColor";
 import { Game } from "../game/Game";
 import { MapConstructor } from "../game/MapConstructor";
 import { GameHandler } from "../handler/GameHandler";
@@ -86,18 +87,27 @@ const LEVELS: MapConstructor[] = [
 			{
 				label: "rA",
 				x: 3, y: 3,
+				spawnCount: 10,
+				spawnDelay: 15,
+				color: CarColor.RED,
 				targets: ["rB"]
 			},
 
 			{
 				label: "rB",
 				x: 8, y: 3,
+				spawnCount: 10,
+				spawnDelay: 15,
+				color: CarColor.RED,
 				targets: ["rC"]
 			},
 			
 			{
 				label: "rC",
 				x: 8, y: 8,
+				spawnCount: 10,
+				spawnDelay: 15,
+				color: CarColor.RED,
 				targets: []
 			},
 		]

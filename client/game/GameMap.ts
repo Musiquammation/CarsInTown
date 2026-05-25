@@ -5,6 +5,7 @@ import { road_t } from "./road_t";
 import { drawRoad, RoadType } from "./roadtypes";
 import { roadfn } from "./roadfn";
 import { Target } from "./Target";
+import { Direction, getDirectionDelta } from "./Direction";
 
 
 export class GameMap {
@@ -24,7 +25,7 @@ export class GameMap {
 	size: number;
 	
 	private grid: Uint16Array;
-	private cars = new Map<bigint, Car>();
+	private cars = new Array<Car>();
 	private targets = new Map<bigint, Target>();
 	private lightStep = 0;
 	private lightCooldown = 0;
@@ -110,7 +111,7 @@ export class GameMap {
 
 	*iterateCars() {
 		for (const i of this.cars) {
-			yield i[1];
+			yield i;
 		}
 	}
 
@@ -123,48 +124,32 @@ export class GameMap {
 	}
 
 
-	getCar(x: number, y: number) {
-		return this.cars.get(GameMap.mapKey(x, y));
-	}
-
-	moveCars() {
-		// Remove grid marks
-		for (const [_, car] of this.cars) {
+	removeCarMarks() {
+		for (const car of this.cars) {
 			const idx = this.getIdx(car.x, car.y);
 			this.grid[idx] &= ~(1<<15);
 		}
+	}
 
+
+	moveCars() {
 		// Move cars and place marks
-		for (const [_, car] of this.cars) {
-			car.move();
-			const idx = this.getIdx(car.x, car.y);
-			this.grid[idx] |= (1<<15);
-		}
+		for (let i = this.cars.length - 1; i >= 0; i--) {
+			const car = this.cars[i];
 
-		// New map that will replace the old one
-		const nextCars = new Map<bigint, Car>();
-
-		// 2. Move cars, check for collisions, and place new marks
-		for (const [_, car] of this.cars) {
-			car.move();
-
-			// Generate the new key based on the updated position
-			const newKey = GameMap.mapKey(car.x, car.y);
-
-			// Collision detection
-			if (nextCars.has(newKey)) {
-				throw new Error(`Collision detected at ${car.x}, ${car.y}`);
+			if (car.move()) {
+				this.cars.splice(i, 1);
+				continue;
 			}
 
-			// Save to the new map and update the grid
-			nextCars.set(newKey, car);
-			
 			const idx = this.getIdx(car.x, car.y);
+
+			if (this.grid[idx] & (1 << 15)) {
+				throw new Error(`Collision detected at (${car.x}, ${car.y})`);
+			}
+
 			this.grid[idx] |= (1 << 15);
 		}
-
-		// 3. Swap the old map with the fully updated new one
-		this.cars = nextCars;
 	}
 	
 
@@ -180,7 +165,54 @@ export class GameMap {
 		}
 	}
 
+	private searchTargetSpawner(x: number, y: number) {
+		const check = (road: number) => 
+			(roadfn.getType(road) === RoadType.ROAD) &&
+			((road & (1<<15)) === 0);
+		
+
+		if (check(this.getRoad(x+1, y)))
+			return Direction.RIGHT;
+
+		if (check(this.getRoad(x, y-1)))
+			return Direction.UP;
+		
+		if (check(this.getRoad(x-1, y)))
+			return Direction.LEFT;
+
+		if (check(this.getRoad(x, y+1)))
+			return Direction.DOWN;
+
+		return null;
+	}
+
+	updateTargets() {
+		for (const [_, target] of this.targets) {
+			if (!target.desiresSpawn())
+				continue;
+
+
+			const dir = this.searchTargetSpawner(target.x, target.y);
+			if (dir === null)
+				continue;
+			
+			const delta = getDirectionDelta(dir);
+
+			const dst = target.spawn();
+			if (dst === null)
+				continue;
+
+			this.cars.push(new Car(
+				target.x + delta.x,
+				target.y + delta.y,
+				dst, dir,
+				target.color
+			));
+		}
+	}
+
 	reset() {
+
 		/// TODO: reset
 	}
 }

@@ -473,21 +473,15 @@ export class Game extends GameState {
 
 		// Behave cars
 		for (const car of gmap.iterateCars()) {
-			if (
-				car.state === 'killed' ||
-				car.state === 'waiting'
-			) {
+			if (car.state === 'killed') {
 				continue;
 			}
 
 			car.behave(this);
-
-			if (car.state === 'won') {
-				car.state = 'waiting';
-				this.score += car.score;
-			}
 		}
 
+		gmap.updateTargets();
+		gmap.removeCarMarks();
 		gmap.moveCars();
 
 
@@ -585,8 +579,8 @@ export class Game extends GameState {
 			// Background
 			args.ctx.fillStyle = "#261f19";
 			args.ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-
 		}
+
 		// Draw game
 		args.followCamera();
 		gmap.drawGrid(args.ctx, args.imageLoader);

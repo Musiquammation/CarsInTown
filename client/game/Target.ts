@@ -1,25 +1,73 @@
+import { CarColor } from "./CarColor";
+
 export class Target {
-    x: number;
-    y: number;
-    directions: Target[] = [];
-    private step = 0;
+	readonly x: number;
+	readonly y: number;
+	readonly spawnCount: number;
+	readonly spawnDelay: number;
+	readonly color: CarColor;
+	directions: Target[] = [];
+	private step = 0;
+	private spawnLeft: number;
+	private spawnCooldown: number;
 
-    constructor(x: number, y: number) {
-        this.x = x;
-        this.y = y;
-    }
 
-    take() {
-        const p = this.directions[this.step];
-        this.step++;
-        if (this.step >= this.directions.length) {
-            this.step -= this.directions.length;
-        }
+	constructor(
+		x: number, y: number,
+		spawnCount: number,
+		spawnDelay: number,
+		color: CarColor
+	) {
+		this.x = x;
+		this.y = y;
+		this.color = color;
 
-        return p;
-    }
+		this.spawnCount = spawnCount;
+		this.spawnDelay = spawnDelay;
+		this.spawnCooldown = spawnDelay;
+		this.spawnLeft = spawnCount;
+	}
 
-    reset() {
-        this.step = 0;
-    }
+	desiresSpawn() {
+		if (this.spawnLeft <= 0)
+			return false;
+
+		this.spawnCooldown--;
+		if (this.spawnCooldown > 0)
+			return false;
+
+		return true;
+	}
+
+	spawn() {
+		this.spawnCooldown = this.spawnDelay;
+		this.spawnLeft--;
+		return this.makeSpawn();
+
+	}
+
+	absorbeCar() {
+		this.spawnLeft++;
+	}
+
+	private makeSpawn() {
+		if (this.directions.length <= 0)
+			return null;
+
+		const p = this.directions[this.step];
+		this.step++;
+		if (this.step >= this.directions.length) {
+			this.step -= this.directions.length;
+		}
+
+		return p;
+	}
+
+
+	reset() {
+		this.step = 0;
+
+		this.spawnLeft = this.spawnCount;
+		this.spawnCooldown = this.spawnDelay;
+	}
 }

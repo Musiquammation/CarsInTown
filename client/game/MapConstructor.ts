@@ -15,8 +15,11 @@ interface Road {
 interface TargetProto {
 	x: number;
 	y: number;
+	spawnCount: number;
+	spawnDelay: number;
 	label: string;
 	spawner?: number;
+	color: CarColor;
 	targets: string[];
 }
 
@@ -47,7 +50,12 @@ export class MapConstructor {
 		// Set targets
 		const targets = new Map<string, Target>();
 		for (const i of this.targets) {
-			targets.set(i.label, new Target(i.x, i.y));
+			targets.set(i.label, new Target(
+				i.x, i.y,
+				i.spawnCount,
+				i.spawnDelay,
+				i.color
+			));
 		}
 		
 		for (const i of this.targets) {
