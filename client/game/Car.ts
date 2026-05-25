@@ -151,6 +151,7 @@ export class Car {
 			return false;
 		}
 
+		this.step -= 1;
 
 		switch (this.state) {
 		case 'front':

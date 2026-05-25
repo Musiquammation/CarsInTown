@@ -87,7 +87,7 @@ const LEVELS: MapConstructor[] = [
 			{
 				label: "rA",
 				x: 3, y: 3,
-				spawnCount: 10,
+				spawnCount: 1,
 				spawnDelay: 15,
 				color: CarColor.RED,
 				targets: ["rB"]
@@ -96,7 +96,7 @@ const LEVELS: MapConstructor[] = [
 			{
 				label: "rB",
 				x: 8, y: 3,
-				spawnCount: 10,
+				spawnCount: 0,
 				spawnDelay: 15,
 				color: CarColor.RED,
 				targets: ["rC"]
