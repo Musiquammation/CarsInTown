@@ -1,14 +1,12 @@
-interface Point {
+export class Target {
     x: number;
     y: number;
-}
-
-export class Target {
-    private readonly directions: Point[];
+    directions: Target[] = [];
     private step = 0;
 
-    constructor(directions: Point[]) {
-        this.directions = directions;
+    constructor(x: number, y: number) {
+        this.x = x;
+        this.y = y;
     }
 
     take() {

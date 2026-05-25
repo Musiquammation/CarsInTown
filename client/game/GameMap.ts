@@ -168,8 +168,8 @@ export class GameMap {
 	}
 	
 
-	addTarget(x: number, y: number, target: Target) {
-		this.targets.set(GameMap.mapKey(x, y), target);
+	addTarget(target: Target) {
+		this.targets.set(GameMap.mapKey(target.x, target.y), target);
 	}
 
 	moveLightStep() {

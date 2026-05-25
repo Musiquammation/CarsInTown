@@ -1,8 +1,5 @@
-import { CarColor } from "../game/CarColor";
-import { Direction } from "../game/Direction";
 import { Game } from "../game/Game";
 import { MapConstructor } from "../game/MapConstructor";
-import { RoadType } from "../game/roadtypes";
 import { GameHandler } from "../handler/GameHandler";
 import { InputHandler } from "../handler/InputHandler";
 import { DrawStateData, GameState } from "../handler/states";
@@ -83,6 +80,26 @@ const LEVELS: MapConstructor[] = [
 
 		roads: [
 			...rect(10,15,10,1,1)
+		],
+
+		targets: [
+			{
+				label: "rA",
+				x: 3, y: 3,
+				targets: ["rB"]
+			},
+
+			{
+				label: "rB",
+				x: 8, y: 3,
+				targets: ["rC"]
+			},
+			
+			{
+				label: "rC",
+				x: 8, y: 8,
+				targets: []
+			},
 		]
 	})
 ];
