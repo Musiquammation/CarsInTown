@@ -15,6 +15,10 @@ export class LightSelector {
     constructor(parent: HTMLElement) {
         this.parent = parent;
 
+        this.parent.addEventListener("contextmenu", (e) => {
+            e.preventDefault();
+        });
+
         this.parent.querySelector("#ls-ok")!
             .addEventListener("click", () => this.confirm());
         this.parent.querySelector("#ls-cancel")!
