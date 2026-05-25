@@ -1,9 +1,8 @@
 import { Direction } from "./Direction";
 import { CarColor } from "./CarColor";
-import { ChunkMap } from "./ChunkMap";
-import { Chunk } from "./Chunk";
-import { roadtypes } from "./roadtypes";
+import { GameMap } from "./GameMap";
 import { modulo } from "./modulo";
+import { road_t } from "./road_t";
 
 interface CarSpawner {
 	x: number;
@@ -19,7 +18,7 @@ interface CarSpawner {
 interface Road {
 	x: number;
 	y: number;
-	data: roadtypes.road_t;
+	data: road_t;
 }
 
 export class MapConstructor {
@@ -32,54 +31,30 @@ export class MapConstructor {
 		}
 	}
 
-	carSpawners: CarSpawner[] = [];
 	roads: Road[] = [];
 	time = 0;
-	width = 32;
-	height = 32;
+	size = 32;
 
-	fill(cmap: ChunkMap) {
-		cmap.time = this.time;
-		cmap.gameArea.x = Math.ceil(this.width/Chunk.SIZE);
-		cmap.gameArea.y = Math.ceil(this.height/Chunk.SIZE);
-
-		for (let i = 0; i < this.carSpawners.length; i++) {
-			const spawner = this.carSpawners[i];
-
-			const chunk = cmap.getChunk(
-				Math.floor(spawner.x/Chunk.SIZE),
-				Math.floor(spawner.y/Chunk.SIZE)
-			);
-
-			chunk.appendCarSpawner({
-				x: modulo(spawner.x, Chunk.SIZE),
-				y: modulo(spawner.y, Chunk.SIZE),
-				color: spawner.color,
-				rythm: spawner.rythm,
-				startCouldown: spawner.couldown,
-				couldown: spawner.couldown,
-				direction: spawner.direction,
-				startCount: spawner.count,
-				count: spawner.count,
-				score: spawner.score,
-				currentId: i
-			});
-		}
+	create() {
+		const cmap = new GameMap(this.size);
 
 		for (const road of this.roads) {
 			cmap.setRoad(road.x, road.y, road.data);
 		}
 
 		const voidRoad = 1<<3;
-		for (let i = 0; i < this.width; i++) {
+		const n = this.size-1;
+		for (let i = 0; i < n; i++) {
 			cmap.setRoad(i, 0, voidRoad);
-			cmap.setRoad(i, this.height, voidRoad);
-		}
-		for (let i = 0; i < this.height; i++) {
+			cmap.setRoad(i, n, voidRoad);
 			cmap.setRoad(0, i, voidRoad);
-			cmap.setRoad(this.width, i, voidRoad);
+			cmap.setRoad(n, i, voidRoad);
 		}
-		cmap.setRoad(this.width, this.height, voidRoad);
+
+		cmap.setRoad(n, n, voidRoad);
+
+
+		return cmap;
 	}
 
 	appendJSON(data: any) {
@@ -87,18 +62,9 @@ export class MapConstructor {
 		if (time !== undefined)
 			this.time = time;
 
-		const width: number | undefined = data.width;
-		if (width !== undefined)
-			this.width = width;
-
-		const height: number | undefined = data.height;
-		if (height !== undefined)
-			this.height = height;
-
-
-		const spawners: CarSpawner[] | undefined = data.spawners;
-		if (spawners !== undefined)
-			this.carSpawners.push(...spawners);
+		const size: number | undefined = data.size;
+		if (size !== undefined)
+			this.size = size;
 
 		const roads: Road[] | undefined = data.roads;
 		if (roads !== undefined)
@@ -107,8 +73,8 @@ export class MapConstructor {
 	}
 
 	setCamera(camera: {x: number, y: number, z: number}) {
-		camera.x = this.width/2;
-		camera.y = this.height/2;
-		camera.z = Math.max(this.width, this.height) * 0.8;
+		camera.x = this.size/2;
+		camera.y = this.size/2;
+		camera.z = this.size * .8;
 	}
 }

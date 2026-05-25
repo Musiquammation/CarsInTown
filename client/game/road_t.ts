@@ -1,0 +1,1 @@
+export type road_t = number;

@@ -2,7 +2,7 @@ import { CarColor } from "../game/CarColor";
 import { Direction } from "../game/Direction";
 import { Game } from "../game/Game";
 import { MapConstructor } from "../game/MapConstructor";
-import { roadtypes } from "../game/roadtypes";
+import { RoadType } from "../game/roadtypes";
 import { GameHandler } from "../handler/GameHandler";
 import { InputHandler } from "../handler/InputHandler";
 import { DrawStateData, GameState } from "../handler/states";
@@ -65,7 +65,7 @@ function b(x: number, y: number, data = 8) {
 }
 
 function c(x: number, y: number, color: CarColor) {
-	return {x, y, data: roadtypes.types.CONSUMER | (color << 3)};
+	return {x, y, data: RoadType.CONSUMER | (color << 3)};
 }
 
 function rect(x: number, y: number, w: number, h: number, data=8) {
@@ -82,8 +82,7 @@ function rect(x: number, y: number, w: number, h: number, data=8) {
 const LEVELS: MapConstructor[] = [
 	new MapConstructor({
 		time: 100*60,
-		width: 31,
-		height: 31,
+		size: 32,
 		spawners: [
 			{
 				x: 13,
@@ -134,8 +133,7 @@ const LEVELS: MapConstructor[] = [
 	// Level 1
 	new MapConstructor({
 		time: 100*60,
-		width: 31,
-		height: 31,
+		size: 32,
 		spawners: [
 			{
 				x: 1,
@@ -182,8 +180,7 @@ const LEVELS: MapConstructor[] = [
 	// Level 2
 	new MapConstructor({
 		time: 100*60,
-		width: 31,
-		height: 31,
+		size: 32,
 		spawners: [
 			{
 				x: 1,
@@ -230,8 +227,7 @@ const LEVELS: MapConstructor[] = [
 	// Level 3
 	new MapConstructor({
 		time: 100*60,
-		width: 31,
-		height: 31,
+		size: 32,
 		spawners: [
 			{
 				x: 1,
@@ -338,8 +334,7 @@ const LEVELS: MapConstructor[] = [
 	// Level 4
 	new MapConstructor({
 		time: 100*60,
-		width: 32,
-		height: 32,
+		size: 32,
 		spawners: [
 			
 			{
@@ -486,8 +481,7 @@ const LEVELS: MapConstructor[] = [
 	// Level 5
 	new MapConstructor({
 		time: 150*60,
-		width: 31,
-		height: 31,
+		size: 32,
 		spawners: [
 			// Red
 			{
@@ -639,8 +633,7 @@ const LEVELS: MapConstructor[] = [
 	// Level 6
 	new MapConstructor({
 		time: 200*60,
-		width: 31,
-		height: 31,
+		size: 32,
 		spawners: [
 			// Top left
 			{
@@ -760,8 +753,7 @@ const LEVELS: MapConstructor[] = [
 	// Level 7
 	new MapConstructor({
 		time: 100*60,
-		width: 31,
-		height: 31,
+		size: 32,
 		spawners: [
 			// Bottom line
 			{
@@ -832,8 +824,7 @@ const LEVELS: MapConstructor[] = [
 	// Level 8
 	new MapConstructor({
 		time: 200*60,
-		width: 31,
-		height: 31,
+		size: 32,
 		spawners: [
 			// Right side
 			{
@@ -970,8 +961,7 @@ const LEVELS: MapConstructor[] = [
 	// Level 9
 	new MapConstructor({
 		time: 100*60,
-		width: 31,
-		height: 31,
+		size: 32,
 		spawners: [
 			...Array.from({ length: 7 }, (_, i) => ({
 				x: 7 + 3*i,
@@ -1014,8 +1004,7 @@ const LEVELS: MapConstructor[] = [
 	// Level 10
 	new MapConstructor({
 		time: 100*60,
-		width: 31,
-		height: 31,
+		size: 32,
 		spawners: [
 			{
 				x: 15,
@@ -1098,8 +1087,7 @@ const LEVELS: MapConstructor[] = [
 	// Level 11
 	new MapConstructor({
 		time: 100*60,
-		width: 31,
-		height: 31,
+		size: 32,
 		spawners: [
 			{
 				x: 8,
@@ -1135,8 +1123,7 @@ const LEVELS: MapConstructor[] = [
 	// Level 12
 	new MapConstructor({
 		time: 100*60,
-		width: 31,
-		height: 31,
+		size: 32,
 		spawners: [
 			{
 				x: 16,
@@ -1194,8 +1181,7 @@ const LEVELS: MapConstructor[] = [
 	// Level 13
 	new MapConstructor({
 		time: 100*60,
-		width: 31,
-		height: 31,
+		size: 32,
 		spawners: [
 			{
 				x: 16,
@@ -1266,8 +1252,7 @@ const LEVELS: MapConstructor[] = [
 	// Level 14
 	new MapConstructor({
 		time: 100*60,
-		width: 31,
-		height: 31,
+		size: 32,
 		spawners: [
 			{
 				x: 13,
@@ -1352,8 +1337,7 @@ const LEVELS: MapConstructor[] = [
 	// Level 15
 	new MapConstructor({
 		time: 100*60,
-		width: 31,
-		height: 31,
+		size: 32,
 		spawners: [
 			{
 				x: 1,

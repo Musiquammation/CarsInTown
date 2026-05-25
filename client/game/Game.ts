@@ -3,20 +3,16 @@ import { isTouchDevice } from "../handler/isTouchDevice";
 import { GameHandler } from "../handler/GameHandler";
 import { DrawStateData, GameState } from "../handler/states";
 import { Vector3 } from "../handler/Vector3";
-import { Chunk } from "./Chunk";
-import { ChunkMap } from "./ChunkMap";
-import { roadtypes } from "./roadtypes";
+import { GameMap } from "./GameMap";
+import { roadfn } from "./roadfn";
 import { Direction, getDirectionDelta, rotateDirectionToLeft, rotateDirectionToRight } from "./Direction";
 import { InputHandler } from "../handler/InputHandler";
-import { ImageLoader } from "../handler/ImageLoader";
-import { modulo } from "./modulo";
-import { lightSizeEditor } from "../handler/LightSizeEditor";
-import { TransitionState } from "../states/TransitionState";
 import { MapConstructor } from "./MapConstructor";
 import { PauseElement } from "../handler/PauseElement";
-import { GridExplorer } from "./GridExplorer";
 import { HandSelection, handSelector } from "./HandSelector";
 import { produceStatsPanel } from "./produceStatsPanel";
+import { onRoadRotation, onRoadScroll, RoadType, TurnDirection } from "./roadtypes";
+import { road_t } from "./road_t";
 
 
 const timeLeftDiv = document.getElementById("timeLeft")!;
@@ -31,7 +27,7 @@ const LIGHT_TICK = 45;
 export class Game extends GameState {
 	private camera: Vector3 = {x: 0, y: 0, z: 20};
 
-	chunkMap = new ChunkMap();
+	gameMap: GameMap | null = null;
 	private carFrame = 0;
 	private runningCars = false;
 	private score = 0;
@@ -46,78 +42,82 @@ export class Game extends GameState {
 
 
 	private placeRoad(x: number, y: number) {
-		const cmap = this.chunkMap;
+		const map = this.gameMap;
+		if (!map)
+			return;
 
 		const neighbors = [
-			cmap.getRoad(x+1, y),
-			cmap.getRoad(x, y-1),
-			cmap.getRoad(x-1, y),
-			cmap.getRoad(x, y+1)
+			map.getRoad(x+1, y),
+			map.getRoad(x, y-1),
+			map.getRoad(x-1, y),
+			map.getRoad(x, y+1)
 		];
 
 		const alive: Direction[] = [];
 		for (let i = 0; i < 4; i++)
-			if (neighbors[i] & 0x7)
+			if (roadfn.getType(neighbors[i]))
 				alive.push(i);
 
 
 		if (alive.length === 0) {
-			cmap.setRoad(x, y, roadtypes.types.ROAD);
+			map.setRoad(x, y, RoadType.ROAD);
 			return;
 		}
 
 		if (alive.length === 1) {
 			const dir = alive[0];
-			if ((neighbors[dir] & 0x7) != roadtypes.types.ROAD) {
-				cmap.setRoad(x, y, roadtypes.types.ROAD);
+			if (roadfn.getType(neighbors[dir]) != RoadType.ROAD) {
+				map.setRoad(x, y, RoadType.ROAD);
 				return;
 			}
 
-			let road = roadtypes.types.ROAD;
+			let road = RoadType.ROAD;
 
 			const mdir = getDirectionDelta(dir);
-			const pos = new GridExplorer(x, y, cmap);
-			pos.move(mdir, cmap);
+			const xp = x + mdir.x;
+			const yp = y + mdir.y;
 			
 			let hasRight;
 			let hasLeft;
 			
 			// Check for turn
 			{
-				const rpos = new GridExplorer(pos);
-				rpos.move(getDirectionDelta(rotateDirectionToRight(dir)), cmap);
-				hasRight = rpos.getRoad() & 0x7;
+				const dr = getDirectionDelta(rotateDirectionToRight(dir));
+				const xr = xp + dr.x;
+				const yr = yp + dr.y;
+				hasRight = roadfn.getType(map.getRoad(xr, yr));
 	
-				const lpos = new GridExplorer(pos);
-				lpos.move(getDirectionDelta(rotateDirectionToLeft(dir)), cmap);
-				hasLeft = lpos.getRoad() & 0x7;
+				const dl = getDirectionDelta(rotateDirectionToLeft(dir));
+				const xl = xp + dl.x;
+				const yl = yp + dl.y;
+				hasLeft = roadfn.getType(map.getRoad(xl, yl));
 			}
 
 
 			if (hasRight && !hasLeft) {
-				pos.setRoad(roadtypes.types.TURN |
-					(roadtypes.TurnDirection.LEFT  << 3) |
+				map.setRoad(xp, yp, RoadType.TURN |
+					(TurnDirection.LEFT  << 3) |
 					(rotateDirectionToLeft(dir) << 6));
 
 
 			} else if (!hasRight && hasLeft) {
-				pos.setRoad(roadtypes.types.TURN |
-					(roadtypes.TurnDirection.RIGHT  << 3) |
+				map.setRoad(xp, yp, RoadType.TURN |
+					(TurnDirection.RIGHT  << 3) |
 					(rotateDirectionToRight(dir) << 6));
 
 			}
 
 
-			cmap.setRoad(x, y, road);
+			map.setRoad(x, y, road);
 			return;
 		}
 
 		if (alive.length === 2) {
-			cmap.setRoad(x, y, roadtypes.types.ROAD);
+			map.setRoad(x, y, RoadType.ROAD);
 			return;
 		}
 
-		cmap.setRoad(x, y, roadtypes.types.ROAD);
+		map.setRoad(x, y, RoadType.ROAD);
 	}
 
 	
@@ -126,7 +126,7 @@ export class Game extends GameState {
 			return;
 
 
-		// this.chunkMap.setRoad(x, y, roadtypes.types.ROAD);
+		// this.gameMap.setRoad(x, y, RoadType.ROAD);
 
 	}
 
@@ -163,9 +163,11 @@ export class Game extends GameState {
 		this.score = 0;
 		this.carFrame = 0;
 		this.runningCars = false;
-		this.chunkMap.reset();
 		this.lightTick = 0;
 		this.lightTickCouldown = 0;
+
+		if (this.gameMap) {this.gameMap.reset();}
+
 
 		(document.getElementById("pause") as PauseElement|null)?.togglePause(false);
 		lightTurnDiv.textContent = this.lightTick.toString().padStart(2, '0');
@@ -207,7 +209,8 @@ export class Game extends GameState {
 
 	enter(data: any, input: InputHandler): void {
 		const mapConstructor = data as MapConstructor;
-		mapConstructor.fill(this.chunkMap);
+		const gmap = mapConstructor.create();
+		this.gameMap = gmap;
 		mapConstructor.setCamera(this.camera);
 
 		const panel = produceStatsPanel(mapConstructor);
@@ -233,12 +236,15 @@ export class Game extends GameState {
 			mouseScreenX: number,
 			mouseScreenY: number,
 		) => {
-			let roadtype: roadtypes.types | null = null;
+			let roadtype: RoadType | null = null;
+
+			const ix = Math.floor(x);
+			const iy = Math.floor(y);
 
 			if (
 				moving &&
-				Math.floor(this.lastMouseX) === Math.floor(x) &&
-				Math.floor(this.lastMouseY) === Math.floor(y)
+				Math.floor(this.lastMouseX) === ix &&
+				Math.floor(this.lastMouseY) === iy
 			) {
 				return;
 			}
@@ -248,20 +254,20 @@ export class Game extends GameState {
 				break;
 
 			case HandSelection.ERASE:
-				this.chunkMap.setRoad(x, y, roadtypes.types.VOID);
+				gmap.setRoad(ix, iy, RoadType.VOID);
 				break;
 
 			case HandSelection.ROAD:
-				this.placeRoad(x, y);
+				this.placeRoad(ix, iy);
 				break;
 
 			case HandSelection.ROTATE:
 			{
-				const road = roadtypes.onRotation(
-					this.chunkMap.getRoad(x, y));
+				const road = onRoadRotation(
+					gmap.getRoad(ix, iy));
 
 				if (road !== null) {
-					this.chunkMap.setRoad(x, y, road);
+					gmap.setRoad(ix, iy, road);
 				}
 
 				break;
@@ -280,42 +286,42 @@ export class Game extends GameState {
 			}
 
 			case HandSelection.TURN:
-				roadtype = roadtypes.types.TURN;
+				roadtype = RoadType.TURN;
 				break;
 
 			case HandSelection.PRIORITY:
-				roadtype = roadtypes.types.PRIORITY;
+				roadtype = RoadType.PRIORITY;
 				break;
 
 			case HandSelection.LIGHT:
-				roadtype = roadtypes.types.LIGHT;
+				roadtype = RoadType.LIGHT;
 				break;
 
 			case HandSelection.ALTERN:
-				roadtype = roadtypes.types.ALTERN;
+				roadtype = RoadType.ALTERN;
 				break;
 
 			}
 
 			if (roadtype !== null) {
-				const road = this.chunkMap.getRoad(x, y);
-				if ((road & 0x7) === roadtype) {
-					const next = roadtypes.onScroll(road, -1);
+				const road = gmap.getRoad(ix, iy);
+				if (roadfn.getType(road) === roadtype) {
+					const next = onRoadScroll(road, -1);
 					if (next === null) {
-						const rotated = roadtypes.onRotation(road);
+						const rotated = onRoadRotation(road);
 
 						if (rotated !== null) {
-							this.chunkMap.setRoad(x, y, rotated);
+							gmap.setRoad(ix, iy, rotated);
 						}
 
 					} else if (next === 'light') {
-						this.setLight(x, y, road);
+						this.setLight(ix, iy, road);
 						
 					} else {
-						this.chunkMap.setRoad(x, y, next);
+						gmap.setRoad(ix, iy, next);
 					}
 				} else {
-					this.chunkMap.setRoad(x, y, roadtype);
+					gmap.setRoad(ix, iy, roadtype);
 				}
 			}
 
@@ -354,18 +360,18 @@ export class Game extends GameState {
 
 			if (leftDown) {
 				if (shiftKey) {
-					this.chunkMap.setRoad(x, y, roadtypes.types.VOID);
+					gmap.setRoad(x, y, RoadType.VOID);
 				} else {
 					this.placeRoad(x, y);
 				}
 			}
 
 			if (rightDown) {
-				const newRoad = roadtypes.onRotation(
-					this.chunkMap.getRoad(x, y));
+				const newRoad = onRoadRotation(
+					gmap.getRoad(x, y));
 
 				if (newRoad !== null)
-					this.chunkMap.setRoad(x, y, newRoad);
+					gmap.setRoad(x, y, newRoad);
 
 			}
 
@@ -406,7 +412,7 @@ export class Game extends GameState {
 
 			if (leftDown) {
 				if (shiftKey) {
-					this.chunkMap.setRoad(x, y, roadtypes.types.VOID);
+					gmap.setRoad(x, y, RoadType.VOID);
 				} else {
 					this.placeRoad(x, y);
 				}
@@ -439,24 +445,24 @@ export class Game extends GameState {
 			const rightDown  = (e.buttons & 2) !== 0;
 			const middleDown = (e.buttons & 4) !== 0;
 
-			const road = this.chunkMap.getRoad(x, y);
+			const road = gmap.getRoad(x, y);
 			if (rightDown) {
-				let type = ((road & 0x7) + 1);
-				if (type >= roadtypes.types.SPAWNER) {
+				let type = (roadfn.getType(road) + 1);
+				if (type >= RoadType.SPAWNER) {
 					type = 1;
 				}
 
 				const nextRoad = (road & ~0x7) | type;
-				this.chunkMap.setRoad(x, y, nextRoad);
+				gmap.setRoad(x, y, nextRoad);
 				return;
 			}
 
-			const roadScroll = roadtypes.onScroll(road, e.deltaY);
+			const roadScroll = onRoadScroll(road, e.deltaY);
 			if (roadScroll === 'light') {
 				this.setLight(x, y, road);
 
 			} else if (roadScroll) {
-				this.chunkMap.setRoad(x, y, roadScroll);
+				gmap.setRoad(x, y, roadScroll);
 			} else if (!leftDown && !rightDown) {
 				this.camera.z -= this.camera.z * e.deltaY / 1000;
 			}
@@ -476,79 +482,75 @@ export class Game extends GameState {
 	}
 
 	runCars() {
+		const gmap = this.gameMap;
+		if (!gmap)
+			return;
+
 		// Behave cars
-		for (let {car, chunk} of this.chunkMap.iterateCars()) {
-			if (!car.alive)
+		for (const car of gmap.iterateCars()) {
+			if (
+				car.state === 'killed' ||
+				car.state === 'waiting'
+			) {
 				continue;
+			}
 
-			const x = modulo(Math.floor(car.x), Chunk.SIZE);
-			const y = modulo(Math.floor(car.y), Chunk.SIZE);
-			const road = chunk.getRoad(x, y);
-			const behave = car.behave(road, this);
-			if (typeof behave === 'number') {
-				chunk.setRoad(x, y, behave);
-			} else {
-				switch (behave) {
-				case "alive":
-					break;
+			car.behave(this);
 
-				case "won":
-					this.score += car.score;
-				case "killed":
-					car.alive = false;
-					break;
-				}
+			if (car.state === 'won') {
+				car.state = 'waiting';
+				this.score += car.score;
 			}
 		}
 
-
-		// Move cars
-		for (let {car} of this.chunkMap.iterateCars()) {
-			car.move();
-		}
+		gmap.moveCars();
 
 
-		this.chunkMap.updateCarGrid(this.carFrame);
+		
 
 		this.carFrame++;
 	}
 
 	placeKeyboardRoads(input: InputHandler) {
+		const gmap = this.gameMap;
+		if (!gmap)
+			return;
+
 		const x = Math.floor(this.lastMouseX);
 		const y = Math.floor(this.lastMouseY);
-		const current = this.chunkMap.getRoad(x, y);
+		const current = gmap.getRoad(x, y);
 		
 		if (input.first('turnRight')) {
-			const road = roadtypes.types.TURN | 
-				(roadtypes.TurnDirection.RIGHT << 3) |
+			const road = RoadType.TURN | 
+				(TurnDirection.RIGHT << 3) |
 				(current & (3<<6));
 
-			this.chunkMap.setRoad(x, y, road);	
+			gmap.setRoad(x, y, road);	
 
 		} else if (input.first('turnLeft')) {
-			const road = roadtypes.types.TURN | 
-				(roadtypes.TurnDirection.LEFT << 3) |
+			const road = RoadType.TURN | 
+				(TurnDirection.LEFT << 3) |
 				(current & (3<<6));
 
-			this.chunkMap.setRoad(x, y, road);
+			gmap.setRoad(x, y, road);
 			
 		} else if (input.first('yieldIns')) {
-			const road = roadtypes.types.PRIORITY | 
+			const road = RoadType.PRIORITY | 
 				(current & (3<<6));
 
-			this.chunkMap.setRoad(x, y, road);
+			gmap.setRoad(x, y, road);
 
 		} else if (input.first('light')) {
-			const road = roadtypes.types.LIGHT | 
+			const road = RoadType.LIGHT | 
 				(current & (3<<6));
 
-			this.chunkMap.setRoad(x, y, road);
+			gmap.setRoad(x, y, road);
 
 		} else if (input.first('altern')) {
-			const road = roadtypes.types.ALTERN | 
+			const road = RoadType.ALTERN | 
 				(current & (3<<6));
 
-			this.chunkMap.setRoad(x, y, road);
+			gmap.setRoad(x, y, road);
 
 		}
 	}
@@ -558,8 +560,8 @@ export class Game extends GameState {
 		if (this.lightTickCouldown >= LIGHT_TICK) {
 			this.lightTickCouldown -= LIGHT_TICK;
 			this.lightTick++;
-			if (this.lightTick >= 32) {
-				this.lightTick -= 32;
+			if (this.lightTick >= 8) {
+				this.lightTick -= 8;
 			}
 			lightTurnDiv.textContent = this.lightTick.toString().padStart(2, '0');
 		}
@@ -575,73 +577,32 @@ export class Game extends GameState {
 			if (this.runningCars) {
 				this.runLightTicks();
 
-				for (let [_, chunk] of this.chunkMap) {
-					chunk.runEvents(this.lightTick);
-				}
-
 				this.runCars();
 				(window as any).fastView = false;
 			}
-	
-			if (this.carFrame >= this.chunkMap.time)
-				return new TransitionState(this);
 		}
 	
 		return null;
 	}
 
 
-	private setLight(x: number, y: number, road: roadtypes.road_t) {
-		const light = this.chunkMap.getLight(x, y);
-		if (light) {
-			lightSizeEditor.get(light.flag, (road >> 4) & 0x3).then(o => {
-				light.flag = o.flag;
-
-				let nextRoad = roadtypes.types.LIGHT;
-				nextRoad |= road & (3<<6); // direction
-				nextRoad |= o.cycleSize << 4;
-				this.chunkMap.setRoad(x, y, nextRoad);
-			});
-			
-		}
+	private setLight(x: number, y: number, road: road_t) {
+		/// TODO: lights
 	}
 
-
-	private drawGrid(ctx: CanvasRenderingContext2D, iloader: ImageLoader) {
-		for (let [_, chunk] of this.chunkMap) {
-			ctx.save();
-			ctx.translate(chunk.x * Chunk.SIZE, chunk.y * Chunk.SIZE);
-			const drawBackground = (
-				chunk.x >= 0 && chunk.x < this.chunkMap.gameArea.x &&
-				chunk.y >= 0 && chunk.y < this.chunkMap.gameArea.y
-			);
-			chunk.drawGrid(ctx, iloader, drawBackground);
-			ctx.restore();
-		}
-	}
-
-	private drawCars(ctx: CanvasRenderingContext2D, iloader: ImageLoader) {
-		for (let [_, chunk] of this.chunkMap) {
-			chunk.drawCars(ctx, iloader);
-		}
-	}
 
 	private drawStats(ctx: CanvasRenderingContext2D) {
 		// time at format mm:ss.u
-		let leftTime: string = (() => {
-			const time = Math.max(this.chunkMap.time - this.carFrame, 0);
-			const totalSeconds = Math.floor(time / 60);
-			const minutes = Math.floor(totalSeconds / 60);
-			const seconds = totalSeconds % 60;
-			const milliseconds = Math.floor((time % 60) / 6);
-			return `${minutes.toString().padStart(1, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds}`;
-		})();
-
+		let leftTime = "No time";
 		timeLeftDiv.innerText = leftTime;
 		scoreDiv.innerText = this.score.toString().padStart(5, "0");
 	}
 
 	draw(args: DrawStateData): void {
+		const gmap = this.gameMap;
+		if (!gmap)
+			return;
+
 		{
 			// Background
 			args.ctx.fillStyle = "#261f19";
@@ -650,8 +611,8 @@ export class Game extends GameState {
 		}
 		// Draw game
 		args.followCamera();
-		this.drawGrid(args.ctx, args.imageLoader);
-		this.drawCars(args.ctx, args.imageLoader);
+		gmap.drawGrid(args.ctx, args.imageLoader);
+		gmap.drawCars(args.ctx, args.imageLoader);
 		args.unfollowCamera();
 
 
