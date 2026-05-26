@@ -19,7 +19,7 @@ export enum RoadType {
 	 * +05: up?
 	 * +06: left?
 	 * +07: down?
-	 * +08: weight [128 values]
+	 * +08: weight [in range 0-125]
 	 * +15: (taken)
 	 */
 	ROAD,

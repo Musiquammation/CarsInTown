@@ -7,6 +7,6 @@ typedef struct Path {
 } Path;
 
 
-void Path_make(Path* path);
+void Path_make(Path* path, int srcX, int srcY, int dstX, int dstY);
 void Path_destroy(Path* path);
 bool Path_isAlive(const Path* path);

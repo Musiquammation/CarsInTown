@@ -104,7 +104,7 @@ int Api_addPath(int srcX, int srcY, int dstX, int dstY) {
 	}
 
 	makePath:
-	Path_make(&api.paths[i]);
+	Path_make(&api.paths[i], srcX, srcY, dstX, dstY);
 	return i;
 }
 
