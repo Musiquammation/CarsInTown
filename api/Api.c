@@ -10,8 +10,8 @@
 Api api;
 
 cell_t* Api_init(int mapSize) {	
-	if (sizeof(Car) != 40) {
-		fprintf(stderr,"Error: sizeof(Car) == %lu != 40\n", sizeof(Car));
+	if (sizeof(Car) != 44) {
+		fprintf(stderr,"Error: sizeof(Car) == %lu != 44\n", sizeof(Car));
 		return NULL;
 	}
 
@@ -44,10 +44,39 @@ int* Api_reserveCars(int length) {
 	return (int*)api.cars;
 }
 
+static int compareCarXY(const void *a, const void *b) {
+	const Car* carA = a;
+	const Car* carB = b;
+
+	if (carA->x < carB->x) return -1;
+	if (carA->x > carB->x) return 1;
+	if (carA->y < carB->y) return -1;
+	if (carA->y > carB->y) return 1;
+	return 0;
+}
+
 void Api_getDangers() {
 	const Car* end = api.cars + api.cars_length;
+	
+	// Add marks
+	for (Car* car = api.cars; car < end; car++)
+		api.map[car->y * api.map_size + car->x] |= (1<<15);
+
+	// Sort cars by (x, y)
+	qsort(
+		api.cars,
+		api.cars_length,
+		sizeof(Car),
+		compareCarXY
+	);
+
+	// Call getDanger
 	for (Car* car = api.cars; car < end; car++)
 		getDanger(car);
+
+	// Remove marks
+	for (Car* car = api.cars; car < end; car++)
+		api.map[car->y * api.map_size + car->x] &= ~(1<<15);
 }
 
 
@@ -83,3 +112,9 @@ void Api_removePath(int id) {
 	Path_destroy(&api.paths[id]);
 }
 
+
+void Api_setRoad(int idx, int road) {
+	printf("set %d %d\n", idx, road);
+	road &= ~(1<<15); // remove car mark
+	api.map[idx] = (cell_t)road;
+}

@@ -8,8 +8,6 @@ import { Target } from "./Target";
 import { api } from "./Api";
 
 
-const RENDER_DISTANCE = 32;
-
 let nextCarId = 0;
 
 
@@ -20,7 +18,7 @@ export class Car {
 	state: CarState = 'front';
 	private direction: Direction;
 	private speedLimit = .2;
-	private realSpeed = 0;
+	private realSpeed = 0.2;
 	private publicSpeed = 0;
 
 	color: CarColor;

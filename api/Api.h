@@ -39,3 +39,6 @@ int Api_addPath(int srcX, int srcY, int dstX, int dstY);
 
 EMCC_EXPORT
 void Api_removePath(int id);
+
+EMCC_EXPORT
+void Api_setRoad(int idx, int road);

@@ -1,4 +1,5 @@
 import { Car } from "./Car";
+import { road_t } from "./road_t";
 
 const actionMap = {
 	'front': 0,
@@ -13,6 +14,7 @@ class Api {
 	private _addPath!: (srcX: number, srcY: number,
 		dstX: number, dstY: number) => number;
 	private _removePath!: (id: number) => void;
+	private _setRoad!: (idx: number, road: road_t) => void;
 	private _cleanup!: () => void;
 
 	private _ready: Promise<void>;
@@ -31,10 +33,17 @@ class Api {
 		this._reserveCars = module.cwrap("Api_reserveCars", "number", ["number"]);
 		this._getDangers = module.cwrap("Api_getDangers", null, []);
 		this._cleanup = module.cwrap("Api_cleanup", null, []);
+
 		this._addPath = module.cwrap("Api_addPath",
 			"number", ["number","number","number","number"]);
 
-		this._cleanup = module.cwrap("Api_cleanup", null, ["number"]);
+		this._removePath = module.cwrap("Api_removePath",
+			null, ["number"]);
+
+		this._setRoad = module.cwrap("Api_setRoad",
+			null, ["number", "number"]);
+
+		this._cleanup = module.cwrap("Api_cleanup", null, []);
 		
 		this.module = module;
 
@@ -67,7 +76,8 @@ class Api {
 		
 		// Define cars
 		let offset = ptr >> 2;
-		for (const car of cars) {
+		for (let i = 0; i < cars.length; i++) {
+			const car = cars[i];
 			HEAP32[offset++] = car.x;
 			HEAP32[offset++] = car.y;
 			HEAPF32[offset++] = car.step;
@@ -76,6 +86,7 @@ class Api {
 			HEAP32[offset++] = car.getDirection();
 			HEAP32[offset++] = car.pathId;
 			HEAP32[offset++] = actionMap[car.state];
+			HEAP32[offset++] = i;
 			offset += 2; // output data
 		}
 
@@ -83,8 +94,10 @@ class Api {
 
 		// Behave cars cars
 		offset = ptr >> 2;
-		for (const car of cars) {
+		for (let i = 0; i < cars.length; i++) {
 			offset += 8; // input data
+			const id = HEAP32[offset++];
+			const car = cars[id];
 			const acc = HEAP32[offset++];
 			const speedLimit = HEAP32[offset++];
 			car.behave(speedLimit, acc);
@@ -102,6 +115,11 @@ class Api {
 	async removePath(id: number) {
 		await this.ready();
 		return this._removePath(id);
+	}
+
+	async setRoad(idx: number, road: road_t) {
+		await this.ready();
+		this._setRoad(idx, road);
 	}
 
 

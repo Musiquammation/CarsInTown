@@ -62,11 +62,8 @@ export class GameMap {
 		}
 
 		const idx = this.getIdx(x, y);
-		if (this.grid[idx] & (1<<15)) {
-			this.grid[idx] = road | (1<<15);
-		} else {
-			this.grid[idx] = road & ~(1<<15);
-		}
+		this.grid[idx] = road;
+		api.setRoad(idx, road);
 	}
 
 	forceRoad(x: number, y: number, road: road_t) {
@@ -75,6 +72,7 @@ export class GameMap {
 
 		const idx = this.getIdx(x, y);
 		this.grid[idx] = road;
+		api.setRoad(idx, road);
 	}
 	
 
@@ -149,7 +147,7 @@ export class GameMap {
 				throw new Error(`Collision detected at (${car.x}, ${car.y})`);
 			}
 
-			this.grid[idx] |= (1 << 15);
+			this.grid[idx] |= (1<<15);
 		}
 	}
 	
