@@ -466,21 +466,15 @@ export class Game extends GameState {
 
 	}
 
-	runCars() {
+	async runCars() {
 		const gmap = this.gameMap;
 		if (!gmap)
 			return;
 
 		// Behave cars
-		for (const car of gmap.iterateCars()) {
-			if (car.state === 'killed') {
-				continue;
-			}
+		gmap.updateCars();
 
-			car.behave(this);
-		}
-
-		gmap.updateTargets();
+		await gmap.updateTargets();
 		gmap.removeCarMarks();
 		gmap.moveCars();
 

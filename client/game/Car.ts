@@ -5,6 +5,7 @@ import { CAR_LINE, CAR_SIZE } from "./CAR_SIZE";
 import { ImageLoader } from "../handler/ImageLoader";
 import { getDanger } from "./getDanger";
 import { Target } from "./Target";
+import { api } from "./Api";
 
 
 const RENDER_DISTANCE = 32;
@@ -12,8 +13,7 @@ const RENDER_DISTANCE = 32;
 let nextCarId = 0;
 
 
-type CarState = 'front' | 'turn-right' | 'turn-left' |
-	'won' | 'waiting' | 'killed';
+type CarState = 'front' | 'turn-right' | 'turn-left';
 
 
 export class Car {
@@ -27,6 +27,7 @@ export class Car {
 	frameLastPositionUpdate = -1;
 	
 	readonly id = nextCarId++;
+	readonly pathId: number;
 	
 	x: number;
 	y: number;
@@ -38,6 +39,7 @@ export class Car {
 		y: number,
 		target: Target,
 		direction: Direction,
+		pathfindingId: number,
 		color: CarColor
 	) {
 		this.x = x;
@@ -45,6 +47,7 @@ export class Car {
 		this.target = target;
 		this.direction = direction;
 		this.color = color;
+		this.pathId = pathfindingId;
 	}
 
 	getCoords() {
@@ -120,11 +123,8 @@ export class Car {
 		ctx.restore();
 	}
 
-	behave(game: Game) {
-		const {speedLimit, acceleration} = getDanger(
-			this, RENDER_DISTANCE, game.gameMap!
-		);
 
+	behave(speedLimit: number, acceleration: number) {
 		if (acceleration < 0) {
 			this.realSpeed += acceleration;
 			if (this.realSpeed < 0) {
@@ -176,6 +176,7 @@ export class Car {
 			this.x === this.target.x &&
 			this.y === this.target.y
 		) {
+			this.removePath();
 			this.target.absorbeCar();
 			return true;
 		}
@@ -190,5 +191,13 @@ export class Car {
 
 	getSpeed() {
 		return this.publicSpeed;
+	}
+
+	getDirection() {
+		return this.direction;
+	}
+
+	removePath() {
+		api.removePath(this.pathId);
 	}
 }

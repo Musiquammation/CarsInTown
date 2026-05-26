@@ -6,6 +6,7 @@ import { drawRoad, RoadType } from "./roadtypes";
 import { roadfn } from "./roadfn";
 import { Target } from "./Target";
 import { Direction, getDirectionDelta } from "./Direction";
+import { api } from "./Api";
 
 
 export class GameMap {
@@ -186,7 +187,7 @@ export class GameMap {
 		return null;
 	}
 
-	updateTargets() {
+	async updateTargets() {
 		for (const [_, target] of this.targets) {
 			if (!target.desiresSpawn())
 				continue;
@@ -202,17 +203,32 @@ export class GameMap {
 			if (dst === null)
 				continue;
 
+
+			const sx = target.x + delta.x;
+			const sy = target.y + delta.y;
+
+			const pathId = await api.addPath(sx, sy, dst.x, dst.y);
+
+
 			this.cars.push(new Car(
-				target.x + delta.x,
-				target.y + delta.y,
-				dst, dir,
-				target.color
+				sx, sy,
+				dst, dir, pathId,
+				target.color,
 			));
 		}
 	}
 
-	reset() {
+	updateCars() {
+		api.getDangers(this.cars);
+	}
 
-		/// TODO: reset
+	reset() {
+		// Reset cars
+		for (const car of this.cars) {
+			car.removePath();			
+		}
+
+		this.cars.length = 0;
+
 	}
 }

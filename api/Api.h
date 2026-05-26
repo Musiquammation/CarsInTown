@@ -12,10 +12,12 @@
 
 typedef struct Api {
     struct Car* cars;
+    struct Path* paths;
     cell_t* map;
-    int length;
-    int reserved;
-    int size;
+    int cars_length;
+    int cars_reserved;
+    int path_reserved;
+    int map_size;
 } Api;
 
 extern Api api;
@@ -31,3 +33,9 @@ int* Api_reserveCars(int length);
 
 EMCC_EXPORT
 void Api_getDangers();
+
+EMCC_EXPORT
+int Api_addPath(int srcX, int srcY, int dstX, int dstY);
+
+EMCC_EXPORT
+void Api_removePath(int id);

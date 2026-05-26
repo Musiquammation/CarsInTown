@@ -15,7 +15,7 @@ LDFLAGS = -O2 \
 	-s WASM=1 \
 	-s MODULARIZE=1 \
 	-s EXPORT_ES6=1 \
-	-s EXPORTED_FUNCTIONS="['_Api_init','_Api_reserveCars','_Api_getDangers','_Api_cleanup']"\
+	-s EXPORTED_FUNCTIONS="['_Api_init','_Api_reserveCars','_Api_getDangers','_Api_cleanup','_Api_addPath','_Api_removePath']"\
 	-s EXPORT_NAME="createModule" \
 	-s EXPORTED_RUNTIME_METHODS="['ccall','cwrap']"
 
