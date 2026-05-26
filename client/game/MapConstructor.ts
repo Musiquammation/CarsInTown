@@ -89,7 +89,7 @@ export class MapConstructor {
 		}
 
 
-		// cmap.setRoad(n, n, voidRoad);
+		cmap.setRoad(n, n, voidRoad);
 
 
 		return cmap;
