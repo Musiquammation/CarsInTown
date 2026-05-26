@@ -14,6 +14,7 @@ import { produceStatsPanel } from "./produceStatsPanel";
 import { onRoadRotation, onRoadScroll, RoadType, ROADTYPES_COUNT } from "./roadtypes";
 import { road_t } from "./road_t";
 import { lightSelector } from "../handler/lightSelector";
+import { api } from "./Api";
 
 
 const timeLeftDiv = document.getElementById("timeLeft")!;
@@ -191,10 +192,7 @@ export class Game extends GameState {
 		const zoomDec = document.getElementById("zoomDec");
 		if (zoomDec) {
 			zoomDec.onclick = () => this.camera.z /= 1.3;
-		}
-
-
-		
+		}		
 	}
 
 	enter(data: any, input: InputHandler): void {
@@ -207,6 +205,8 @@ export class Game extends GameState {
 		document.body.appendChild(panel);
 		this.statsPanel = panel;
 
+
+		api.init(gmap.size);
 
 		this.test();
 
@@ -599,6 +599,8 @@ export class Game extends GameState {
 			this.statsPanel.remove();
 		}
 
+
+		api.cleanup();
 		return {score: this.score};	
 	}
 
