@@ -2,11 +2,19 @@
 
 #include <stdbool.h>
 
+
+typedef struct Step {
+    int x;
+    int y;
+    int dir;
+} Step;
+
 typedef struct Path {
+	Step* steps;
 	int length;
 } Path;
 
 
-void Path_make(Path* path, int srcX, int srcY, int dstX, int dstY);
+bool Path_make(Path* path, int firstDir, int srcX, int srcY, int dstX, int dstY);
 void Path_destroy(Path* path);
 bool Path_isAlive(const Path* path);

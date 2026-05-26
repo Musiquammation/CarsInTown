@@ -197,8 +197,10 @@ export class Game extends GameState {
 
 	enter(data: any, input: InputHandler): void {
 		const mapConstructor = data as MapConstructor;
+		api.init(mapConstructor.size);
 		const gmap = mapConstructor.create();
 		this.gameMap = gmap;
+
 		mapConstructor.setCamera(this.camera);
 
 		const panel = produceStatsPanel(mapConstructor);
@@ -206,7 +208,6 @@ export class Game extends GameState {
 		this.statsPanel = panel;
 
 
-		api.init(gmap.size);
 
 		this.test();
 

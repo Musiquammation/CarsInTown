@@ -3,9 +3,16 @@
 #include "Path.h"
 #include "cell_t.h"
 #include "getDanger.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+
+#if PRINT_LOGS
+#include <stdio.h>
+#endif
+
 
 Api api;
 
@@ -80,7 +87,7 @@ void Api_getDangers() {
 }
 
 
-int Api_addPath(int srcX, int srcY, int dstX, int dstY) {
+int Api_addPath(int startDir, int srcX, int srcY, int dstX, int dstY) {
 	// Search empty pathfinding
 	int i = 0;
 	for (; i < api.path_reserved; i++) {
@@ -95,7 +102,7 @@ int Api_addPath(int srcX, int srcY, int dstX, int dstY) {
 	{
 		int nextReserved = api.path_reserved * 2;
 		Path* newPaths = malloc(nextReserved * sizeof(Path));
-		memcpy(newPaths, api.paths, nextReserved * sizeof(Path));
+		memcpy(newPaths, api.paths, api.path_reserved * sizeof(Path));
 		free(api.paths);
 		api.paths = newPaths;
 		api.path_reserved = nextReserved;
@@ -103,9 +110,11 @@ int Api_addPath(int srcX, int srcY, int dstX, int dstY) {
 		i = api.path_reserved;
 	}
 
+
+
 	makePath:
-	Path_make(&api.paths[i], srcX, srcY, dstX, dstY);
-	return i;
+	return Path_make(&api.paths[i], startDir, srcX, srcY, dstX, dstY)
+		? i : (-1);
 }
 
 void Api_removePath(int id) {
@@ -114,7 +123,6 @@ void Api_removePath(int id) {
 
 
 void Api_setRoad(int idx, int road) {
-	printf("set %d %d\n", idx, road);
 	road &= ~(1<<15); // remove car mark
 	api.map[idx] = (cell_t)road;
 }

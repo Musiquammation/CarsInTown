@@ -164,24 +164,55 @@ export class GameMap {
 		}
 	}
 
-	private searchTargetSpawner(x: number, y: number) {
-		const check = (road: number) => 
-			(roadfn.getType(road) === RoadType.ROAD) &&
-			((road & (1<<15)) === 0);
-		
 
-		if (check(this.getRoad(x+1, y)))
-			return Direction.RIGHT;
+	private searchTargetSpawner(
+		srcX: number, srcY: number,
+		dstX: number, dstY: number
+	) {
+		const check = (x: number, y: number) => {
+			const road = this.getRoad(x, y);
+			return (
+				roadfn.getType(road) === RoadType.ROAD &&
+				((road & (1 << 15)) === 0)
+			);
+		};
 
-		if (check(this.getRoad(x, y-1)))
-			return Direction.UP;
-		
-		if (check(this.getRoad(x-1, y)))
-			return Direction.LEFT;
+		type Candidate = {
+			dir: Direction;
+			nx: number;
+			ny: number;
+			dist: number;
+		};
 
-		if (check(this.getRoad(x, y+1)))
-			return Direction.DOWN;
+		const DIRS: Array<{ dir: Direction; dx: number; dy: number }> = [
+			{ dir: Direction.RIGHT, dx: 1, dy: 0 },
+			{ dir: Direction.UP,    dx: 0, dy: -1 },
+			{ dir: Direction.LEFT,  dx: -1, dy: 0 },
+			{ dir: Direction.DOWN,  dx: 0, dy: 1 },
+		];
 
+		const manhattan = (x: number, y: number) =>
+			Math.abs(x - dstX) + Math.abs(y - dstY);
+
+		const candidates: Candidate[] = DIRS.map(d => {
+			const nx = srcX + d.dx;
+			const ny = srcY + d.dy;
+
+			return {
+				dir: d.dir,
+				nx,
+				ny,
+				dist: manhattan(nx, ny),
+			};
+		}).sort((a, b) => a.dist - b.dist);
+
+		for (const c of candidates) {
+			if (check(c.nx, c.ny)) {
+				return c.dir;
+			}
+		}
+
+		// fallback si aucune direction valide
 		return null;
 	}
 
@@ -189,23 +220,33 @@ export class GameMap {
 		for (const [_, target] of this.targets) {
 			if (!target.desiresSpawn())
 				continue;
-
-
-			const dir = this.searchTargetSpawner(target.x, target.y);
-			if (dir === null)
-				continue;
 			
-			const delta = getDirectionDelta(dir);
 
 			const dst = target.spawn();
 			if (dst === null)
 				continue;
 
+			const dir = this.searchTargetSpawner(
+				target.x, target.y, dst.x, dst.y);
+
+			if (dir === null) {
+				target.absorbeCar(); // failed to place car
+				continue;
+			}
+
+			const delta = getDirectionDelta(dir);
+
 
 			const sx = target.x + delta.x;
 			const sy = target.y + delta.y;
 
-			const pathId = await api.addPath(sx, sy, dst.x, dst.y);
+			const pathId = await api.addPath(
+				dir, sx, sy, dst.x, dst.y);
+
+			if (pathId < 0) {
+				target.absorbeCar(); // failed to find path
+				continue;
+			}
 
 
 			this.cars.push(new Car(
@@ -227,6 +268,15 @@ export class GameMap {
 		}
 
 		this.cars.length = 0;
+
+
+		// Reset targets
+		for (const [_, target] of this.targets) {
+			target.reset();
+		}
+
+		this.lightStep = 0;
+		this.lightCooldown = 0;
 
 	}
 }

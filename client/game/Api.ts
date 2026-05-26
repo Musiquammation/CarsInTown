@@ -11,7 +11,7 @@ class Api {
 	private _init!: (mapSize: number) => number;
 	private _reserveCars!: (length: number) => number;
 	private _getDangers!: () => void;
-	private _addPath!: (srcX: number, srcY: number,
+	private _addPath!: (firstDir: number, srcX: number, srcY: number,
 		dstX: number, dstY: number) => number;
 	private _removePath!: (id: number) => void;
 	private _setRoad!: (idx: number, road: road_t) => void;
@@ -21,6 +21,7 @@ class Api {
 	private _resolveReady!: () => void;
 
 	private module: any;
+	private mapPtr = -1;
 
 	constructor() {
 		this._ready = new Promise((resolve) => {
@@ -57,12 +58,14 @@ class Api {
 
 	async init(mapSize: number) {
 		await this.ready();
-		return this._init(mapSize);
+		this.mapPtr = this._init(mapSize) >> 1;
+		console.log("Map initialized");
 	}
-
+	
 	async cleanup() {
 		await this.ready();
-		return this._cleanup();
+		console.log("Map clean");
+		this._cleanup();
 	}
 
 	async getDangers(cars: Car[]) {
@@ -105,11 +108,12 @@ class Api {
 	}
 
 	async addPath(
+		firstDir: number,
 		srcX: number, srcY: number,
 		dstX: number, dstY: number
 	) {
 		await this.ready();
-		return this._addPath(srcX, srcY, dstX, dstY);
+		return this._addPath(firstDir, srcX, srcY, dstX, dstY);
 	}
 
 	async removePath(id: number) {
@@ -119,7 +123,9 @@ class Api {
 
 	async setRoad(idx: number, road: road_t) {
 		await this.ready();
-		this._setRoad(idx, road);
+
+		road &= ~(1<<15); // remove car mark
+		this.module.HEAP16[this.mapPtr + idx] = road;
 	}
 
 
