@@ -16,6 +16,7 @@ typedef struct Api {
     int cars_reserved;
     int path_reserved;
     int map_size;
+    int lightStep;
 } Api;
 
 extern Api api;
@@ -25,7 +26,7 @@ extern Api api;
 cell_t* Api_init(int mapSize);
 void Api_cleanup();
 int* Api_reserveCars(int length);
-void Api_getDangers();
+int Api_getDangers(int lightStep);
 int Api_addPath(int startDir, int srcX, int srcY, int dstX, int dstY);
 void Api_removePath(int id);
 int* Api_movePath(int id);

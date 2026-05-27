@@ -10,7 +10,7 @@ const actionMap = {
 class Api {
 	private _init!: (mapSize: number) => number;
 	private _reserveCars!: (length: number) => number;
-	private _getDangers!: () => void;
+	private _getDangers!: (lightStep: number) => number;
 	private _addPath!: (firstDir: number, srcX: number, srcY: number,
 		dstX: number, dstY: number) => number;
 	private _removePath!: (id: number) => void;
@@ -32,7 +32,7 @@ class Api {
 	appendModule(module: any) {
 		this._init = module.cwrap("Api_init", "number", ["number"]);
 		this._reserveCars = module.cwrap("Api_reserveCars", "number", ["number"]);
-		this._getDangers = module.cwrap("Api_getDangers", null, []);
+		this._getDangers = module.cwrap("Api_getDangers", "number", ["number"]);
 		this._cleanup = module.cwrap("Api_cleanup", null, []);
 
 		this._addPath = module.cwrap("Api_addPath",
@@ -68,7 +68,7 @@ class Api {
 		this._cleanup();
 	}
 
-	async getDangers(cars: Car[]) {
+	async getDangers(cars: Car[], lightStep: number) {
 		await this.ready();
 
 		const ptr = this._reserveCars(cars.length);
@@ -81,19 +81,29 @@ class Api {
 		let offset = ptr >> 2;
 		for (let i = 0; i < cars.length; i++) {
 			const car = cars[i];
+			let dir = car.getDirection();
+			if (car.state == 'turn-left') {
+				dir = (dir+1)%4;
+			} else if (car.state === 'turn-right') {
+				dir = (dir+3)%4;
+			}
+
 			HEAP32[offset++] = car.x;
 			HEAP32[offset++] = car.y;
 			HEAPF32[offset++] = car.step;
 			HEAPF32[offset++] = car.getSpeed();
 			HEAPF32[offset++] = car.getSpeedLimit();
-			HEAP32[offset++] = car.getDirection();
+			HEAP32[offset++] = dir;
 			HEAP32[offset++] = car.pathId;
 			HEAP32[offset++] = actionMap[car.state];
 			HEAP32[offset++] = i;
 			offset += 2; // output data
 		}
 
-		this._getDangers();
+		const error = this._getDangers(lightStep);
+		if (error) {
+			throw new Error("getDangers exited " + error);
+		}
 
 		// Behave cars cars
 		offset = ptr >> 2;
@@ -101,8 +111,9 @@ class Api {
 			offset += 8; // input data
 			const id = HEAP32[offset++];
 			const car = cars[id];
-			const acc = HEAP32[offset++];
-			const speedLimit = HEAP32[offset++];
+			const acc = HEAPF32[offset++];
+			console.log(acc);
+			const speedLimit = HEAPF32[offset++];
 			car.behave(speedLimit, acc);
 		}
 	}

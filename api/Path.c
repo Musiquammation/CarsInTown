@@ -7,16 +7,7 @@
 #include "cell_t.h"
 
 
-
-enum {
-	VOID      = 0,
-	ROAD      = 1,
-	TARGET    = 2,
-	DIRECTION = 3,
-	YIELD     = 4,
-	LIGHT     = 5,
-};
-
+#include "CellTypeEnum.h"
 
 /* ── bit-field helpers ─────────────────────────────────────── */
 
@@ -275,12 +266,12 @@ bool Path_make(Path *path, int startDir, int srcX, int srcY, int dstX, int dstY)
 		 *   DIRECTION       : apply side rules for the matching dir entries;
 		 *                     if no entry matches our current direction, go straight
 		 */
-		if (type == VOID)
+		if (type == CELL_VOID)
 			continue;
 
 		int dir_mask = 0;
 
-		if (type == DIRECTION) {
+		if (type == CELL_DIRECTION) {
 			int first_side  = DIR_FIRST_SIDE(cell);
 			int second_side = DIR_SECOND_SIDE(cell);
 			int first_dir   = DIR_FIRST_DIR(cell);
@@ -312,9 +303,9 @@ bool Path_make(Path *path, int startDir, int srcX, int srcY, int dstX, int dstY)
 			cell_t ncell = api.map[ny * size + nx];
 			int    ntype = CELL_TYPE(ncell);
 
-			if (ntype == VOID) continue; /* impassable */
+			if (ntype == CELL_VOID) continue; /* impassable */
 
-			float step_cost = (ntype == ROAD)
+			float step_cost = (ntype == CELL_ROAD)
 				? evalCost((int)ROAD_WEIGHT(ncell))
 				: getNonRoadCost();
 

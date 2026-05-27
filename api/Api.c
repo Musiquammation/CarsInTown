@@ -62,7 +62,9 @@ static int compareCarXY(const void *a, const void *b) {
 	return 0;
 }
 
-void Api_getDangers() {
+int Api_getDangers(int lightStep) {
+	api.lightStep = lightStep;
+
 	const Car* end = api.cars + api.cars_length;
 	
 	// Add marks
@@ -78,12 +80,20 @@ void Api_getDangers() {
 	);
 
 	// Call getDanger
-	for (Car* car = api.cars; car < end; car++)
-		getDanger(car);
+	int error = 0;
+	for (Car* car = api.cars; car < end; car++) {
+		error = getDanger(car);
+		if (error) {
+			break;
+		}
+	}
+
 
 	// Remove marks
 	for (Car* car = api.cars; car < end; car++)
 		api.map[car->y * api.map_size + car->x] &= ~(1<<15);
+
+	return error;
 }
 
 

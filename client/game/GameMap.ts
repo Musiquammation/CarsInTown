@@ -265,13 +265,14 @@ export class GameMap {
 	}
 
 	updateCars() {
-		api.getDangers(this.cars);
+		api.getDangers(this.cars, this.lightStep);
 	}
 
 	reset() {
 		// Reset cars
 		for (const car of this.cars) {
-			car.removePath();			
+			car.removePath();
+			this.grid[this.getIdx(car.x, car.y)] &= ~(1<<15);
 		}
 
 		this.cars.length = 0;
