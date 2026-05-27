@@ -496,7 +496,21 @@ int getDanger(Car* car) {
 			}
 		}
 
+		// Move
 		moveSpy(&spy);
+
+
+		// Check priorities
+		if (checkRight) {
+			Spy cpy = {spy.x, spy.y, (spy.dir+1)%4}; // turn to right
+			checkPriority(&bff, cpy, dist);
+		}
+		
+		if (checkLeft) {
+			Spy cpy = {spy.x, spy.y, (spy.dir+3)%4}; // turn to left
+			checkPriority(&bff, cpy, dist);
+		}
+
 
 		// Check for turn
 		if (spy.x == bff.pathX && spy.y == bff.pathY) {
@@ -511,19 +525,6 @@ int getDanger(Car* car) {
 			bff.pathStep++;
 			bff.pathX = bff.steps[bff.pathStep].x;
 			bff.pathY = bff.steps[bff.pathStep].y;
-		}
-
-
-
-		// Check priorities
-		if (checkRight) {
-			Spy cpy = {spy.x, spy.y, (spy.dir+1)%4}; // turn to right
-			checkPriority(&bff, cpy, dist);
-		}
-		
-		if (checkLeft) {
-			Spy cpy = {spy.x, spy.y, (spy.dir+3)%4}; // turn to left
-			checkPriority(&bff, cpy, dist);
 		}
 	}
 

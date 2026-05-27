@@ -56,8 +56,11 @@ export class MapConstructor {
 				i.spawnDelay,
 				i.color
 			));
+
+			cmap.carsToEnterGoal += i.spawnCount;
 		}
 		
+		// Add targets
 		for (const i of this.targets) {
 			const t = targets.get(i.label)!;
 			t.directions = i.targets.map(label => {
@@ -77,9 +80,9 @@ export class MapConstructor {
 				if (c >= 65 && c <= 90) { // A-Z
 					symbol = c - 65;
 				} else if (c >= 97 && c <= 122) { // a-z
-					return c - 97;
+					symbol = c - 97;
 				} else if (c >= 48 && c <= 53) {
-					return 26 + (c - 48);
+					symbol = 26 + (c - 48);
 				}
 			}
 
@@ -90,7 +93,6 @@ export class MapConstructor {
 				RoadType.TARGET | (i.color<<4) || (symbol<<7));
 		}
 
-		
 
 		
 

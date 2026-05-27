@@ -558,10 +558,26 @@ export class Game extends GameState {
 
 
 	private drawStats(ctx: CanvasRenderingContext2D) {
-		// time at format mm:ss.u
-		let leftTime = "No time";
+		const gmap = this.gameMap;
+		if (!gmap) {
+			timeLeftDiv.innerText = "00:00.0";
+			scoreDiv.innerText = (0).toString().padStart(3, "0");
+			return;
+		}
+
+		const left = gmap.carsToEnterGoal - gmap.enteredCars;
+		scoreDiv.innerText =  left.toString().padStart(3, "0");
+
+		const leftTime: string = (() => {
+			const time = this.carFrame;
+			const totalSeconds = Math.floor(time / 60);
+			const minutes = Math.floor(totalSeconds / 60);
+			const seconds = totalSeconds % 60;
+			const milliseconds = Math.floor((time % 60) / 6);
+			return `${minutes.toString().padStart(1, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds}`;
+		})();
+
 		timeLeftDiv.innerText = leftTime;
-		scoreDiv.innerText = this.score.toString().padStart(5, "0");
 	}
 
 	draw(args: DrawStateData): void {

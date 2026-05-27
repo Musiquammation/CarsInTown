@@ -40,6 +40,9 @@ export class Target {
 	}
 
 	spawn() {
+		if (this.isFinal())
+			return null;
+
 		this.spawnCooldown = this.spawnDelay;
 		this.spawnLeft--;
 		return this.makeSpawn();
@@ -69,5 +72,9 @@ export class Target {
 
 		this.spawnLeft = this.spawnCount;
 		this.spawnCooldown = this.spawnDelay;
+	}
+
+	isFinal() {
+		return this.directions.length <= 0;
 	}
 }

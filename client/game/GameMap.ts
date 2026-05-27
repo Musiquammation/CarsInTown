@@ -137,7 +137,11 @@ export class GameMap {
 		for (let i = this.cars.length - 1; i >= 0; i--) {
 			const car = this.cars[i];
 
-			if (car.move()) {
+			const code = car.move();
+			if (code >= 1) {
+				if (code >= 2) {
+					this.enteredCars++;
+				}
 				this.cars.splice(i, 1);
 				continue;
 			}
@@ -257,7 +261,7 @@ export class GameMap {
 			);
 
 
-			if (car.appendSubTarget()) {
+			if (car.appendSubTarget() >= 2) {
 				throw new Error("Car spawned and immediately reached its target");
 			}
 

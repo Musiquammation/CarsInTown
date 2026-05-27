@@ -62,7 +62,6 @@ export class Car {
 		this.direction = direction;
 		this.color = color;
 		this.pathId = pathfindingId;
-		console.log("pathId",pathfindingId);
 		this.nextDir = direction;
 	}
 
@@ -167,7 +166,7 @@ export class Car {
 		this.step += this.realSpeed;
 
 		if (this.step < 1) {
-			return false;
+			return 0;
 		}
 
 		this.step -= 1;
@@ -200,7 +199,7 @@ export class Car {
 
 		this.state = 'front';
 		
-		return false;
+		return 0;
 	}
 
 	appendSubTarget() {
@@ -208,7 +207,7 @@ export class Car {
 			// Path is finished
 			this.removePath();
 			this.target.absorbeCar();
-			return true;
+			return this.target.isFinal() ? 2:1;
 		}
 
 		// Next node
@@ -221,7 +220,7 @@ export class Car {
 		this.nextY = y;
 		this.nextDir = dir;
 
-		return false;
+		return 0;
 	}
 
 	getSpeedLimit() {
