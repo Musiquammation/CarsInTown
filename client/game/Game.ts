@@ -11,9 +11,10 @@ import { MapConstructor } from "./MapConstructor";
 import { PauseElement } from "../handler/PauseElement";
 import { HandSelection, handSelector } from "./HandSelector";
 import { produceStatsPanel } from "./produceStatsPanel";
-import { onRoadRotation, onRoadScroll, RoadType, ROADTYPES_COUNT } from "./roadtypes";
+import { onRoadRotation, onRoadEdit, RoadType } from "./roadtypes";
 import { lightSelector } from "../handler/lightSelector";
 import { api } from "./Api";
+import { turnSelector } from "./turnSelector";
 
 
 const timeLeftDiv = document.getElementById("timeLeft")!;
@@ -147,7 +148,6 @@ export class Game extends GameState {
 		y += this.camera.y;
 
 		return { x, y };
-
 	}
 
 	private restart() {
@@ -225,6 +225,7 @@ export class Game extends GameState {
 			smode: HandSelection,
 			x: number, y: number,
 			moving: boolean,
+			click: 'left' | 'right' | 'mobile',
 			mouseScreenX: number,
 			mouseScreenY: number,
 		) => {
@@ -242,16 +243,48 @@ export class Game extends GameState {
 				return;
 			}
 
+
+			const applyEdit = (road: number) => {
+				const next = onRoadEdit(road);
+
+				if (next === null) {
+					const rotated = onRoadRotation(road);
+					if (rotated) {
+						gmap.setRoad(ix, iy, rotated);
+					}
+
+					return;
+				}
+
+				if (next === 'light') {
+					this.setLight(ix, iy);
+					return;
+				}
+
+				if (next === 'direction') {
+					this.setDirection(ix, iy);
+					return;
+				}
+
+				gmap.setRoad(ix, iy, next);
+			}
+
+			if (click === 'right') {
+				applyEdit(gmap.getRoad(ix, iy));
+				return;
+			}
+
+
 			switch (smode) {
 			case HandSelection.NONE:
 				break;
 
-			case HandSelection.ERASE:
-				gmap.setRoad(ix, iy, RoadType.VOID);
-				break;
-
 			case HandSelection.ROAD:
 				this.placeRoad(ix, iy);
+				break;
+
+			case HandSelection.ERASE:
+				gmap.setRoad(ix, iy, RoadType.VOID);
 				break;
 
 			case HandSelection.ROTATE:
@@ -294,20 +327,16 @@ export class Game extends GameState {
 			if (roadtype !== null) {
 				const road = gmap.getRoad(ix, iy);
 				if (roadfn.getType(road) === roadtype) {
-					const next = onRoadScroll(road, -1);
-					if (next === null) {
+					if (click === 'left') {
 						const rotated = onRoadRotation(road);
-
-						if (rotated !== null) {
+						if (rotated) {
 							gmap.setRoad(ix, iy, rotated);
 						}
 
-					} else if (next === 'light') {
-						this.setLight(ix, iy);
-						
 					} else {
-						gmap.setRoad(ix, iy, next);
+						applyEdit(road);
 					}
+
 				} else {
 					gmap.setRoad(ix, iy, roadtype);
 				}
@@ -336,30 +365,34 @@ export class Game extends GameState {
 
 			const {x,y} = this.getMousePosition(clientX, clientY);
 
-			const smode = handSelector.getMode();
-			if (smode) {
-				runMode(smode, x, y, false, clientX, clientY);
-				return;
-			}
-
 			const leftDown   = (buttons & 1) !== 0;
 			const rightDown  = (buttons & 2) !== 0;
 			const middleDown = (buttons & 4) !== 0;
 
+			const ix = Math.floor(x);
+			const iy = Math.floor(y);
+
+			const smode = handSelector.getMode();
 			if (leftDown) {
 				if (shiftKey) {
-					gmap.setRoad(x, y, RoadType.VOID);
+					gmap.setRoad(ix, iy, RoadType.VOID);
+				} else if (smode) {
+					runMode(smode, ix, iy, false, 'left', clientX, clientY);
 				} else {
-					this.placeRoad(x, y);
+					this.placeRoad(ix, iy);
 				}
-			}
 
-			if (rightDown) {
-				const newRoad = onRoadRotation(
-					gmap.getRoad(x, y));
+			} else if (rightDown) {
+				if (smode) {
+					runMode(smode, ix, iy, false, 'right', clientX, clientY);
 
-				if (newRoad !== null)
-					gmap.setRoad(x, y, newRoad);
+				} else {
+					const newRoad = onRoadRotation(
+						gmap.getRoad(ix, iy));
+	
+					if (newRoad !== null)
+						gmap.setRoad(ix, iy, newRoad);
+				}
 
 			}
 
@@ -369,14 +402,21 @@ export class Game extends GameState {
 		const mouseMove = (
 			clientX: number,
 			clientY: number,
-			buttons: number,
+			buttons: number | 'mobile',
 			shiftKey: boolean
 		) => {
 			let {x,y} = this.getMousePosition(clientX, clientY);
-						
-			const leftDown   = (buttons & 1) !== 0;
-			const rightDown  = (buttons & 2) !== 0;
-			const middleDown = (buttons & 4) !== 0;
+			
+			const {leftDown, rightDown, middleDown} = (()=>{
+				if (buttons === 'mobile') {
+					return {leftDown: true, rightDown: false, middleDown: false};
+				}
+
+				const leftDown   = (buttons & 1) !== 0;
+				const rightDown  = (buttons & 2) !== 0;
+				const middleDown = (buttons & 4) !== 0;
+				return {leftDown, rightDown, middleDown};
+			})();
 
 			if (middleDown) {
 				this.camera.x += this.lastMouseX - x;
@@ -388,21 +428,22 @@ export class Game extends GameState {
 			}
 
 
+			const ix = Math.floor(x);
+			const iy = Math.floor(y);
 
-			const smode = handSelector.getMode();
-			if (smode && leftDown) {
-				runMode(smode, x, y, true, clientX, clientY);
-				this.lastScreenMouseX = clientX;
-				this.lastScreenMouseY = clientY;
-
-				return;
-			}
+			const leftClick = buttons === 'mobile' ?
+				'mobile' : 'left';
 
 			if (leftDown) {
+				const smode = handSelector.getMode();
 				if (shiftKey) {
-					gmap.setRoad(x, y, RoadType.VOID);
+					gmap.setRoad(ix, iy, RoadType.VOID);
+				} else if (smode) {
+					runMode(smode, ix, iy, true, leftClick, clientX, clientY);
+					this.lastScreenMouseX = clientX;
+					this.lastScreenMouseY = clientY;
 				} else {
-					this.placeRoad(x, y);
+					this.placeRoad(ix, iy);
 				}
 			}
 
@@ -423,37 +464,12 @@ export class Game extends GameState {
 		};
 
 		input.onTouchMove = e =>
-			mouseMove(e.touches[0].clientX, e.touches[0].clientY, 1, false);
+			mouseMove(e.touches[0].clientX, e.touches[0].clientY, 'mobile', false);
 		
 
 		input.onScroll = e => {
 			let {x,y} = this.getMousePosition(e.clientX, e.clientY);
-						
-			const leftDown   = (e.buttons & 1) !== 0;
-			const rightDown  = (e.buttons & 2) !== 0;
-			const middleDown = (e.buttons & 4) !== 0;
-
-			const road = gmap.getRoad(x, y);
-			if (rightDown) {
-				let type = (roadfn.getType(road) + 1);
-				if (type >= ROADTYPES_COUNT) {
-					type = 1;
-				}
-
-				const nextRoad = (road & ~0x7) | type;
-				gmap.setRoad(x, y, nextRoad);
-				return;
-			}
-
-			const roadScroll = onRoadScroll(road, e.deltaY);
-			if (roadScroll === 'light') {
-				this.setLight(x, y);
-			} else if (roadScroll) {
-				gmap.setRoad(x, y, roadScroll);
-			} else if (!leftDown && !rightDown) {
-				this.camera.z -= this.camera.z * e.deltaY / 1000;
-			}
-
+			this.camera.z -= this.camera.z * e.deltaY / 1000;
 			updateMouse(x, y);
 		}
 
@@ -565,6 +581,22 @@ export class Game extends GameState {
 			lightSelector.take(road, data => {
 				if (data) {
 					gmap.setRoad(x, y, data | RoadType.LIGHT);
+				}
+			});
+			
+		}
+	}
+
+	private setDirection(x: number, y: number) {
+		const gmap = this.gameMap;
+		if (!gmap)
+			return;
+
+		const road = gmap.getRoad(x, y);
+		if (roadfn.getType(road) === RoadType.DIRECTION) {
+			turnSelector.take(road, data => {
+				if (data) {
+					gmap.setRoad(x, y, data | RoadType.DIRECTION);
 				}
 			});
 			

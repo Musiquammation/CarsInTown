@@ -13,7 +13,7 @@ int main() {
     for (int y = 3; y < 10; y++)
         api.map[y * 32 + 10] = 1;
 
-    api.map[3 * 32 + 10] = 3 | (3<<4) | (3<<12);
+    api.map[3 * 32 + 10] = 3 | (2<<4) | (3<<12);
 
     Path path;
     bool found = Path_make(&path, 0, 3, 3, 10, 7);

@@ -26,21 +26,32 @@
 		</div>
 
 		<div id="lightSelector" class="hidden">
-				<div class="ls-panel">
-					<div class="ls-row">
-						<label>Direction</label>
-						<select id="ls-direction"></select>
-					</div>
-					<div class="ls-row">
-						<label>Lumières</label>
-						<div class="ls-dots"></div>
-					</div>
-					<div class="ts-actions">
-						<button id="ls-cancel">Annuler</button>
-						<button id="ls-ok" class="ts-ok">OK</button>
-					</div>
+			<div class="ls-panel">
+				<div class="ls-row">
+					<label>Direction</label>
+					<select id="ls-direction"></select>
+				</div>
+				<div class="ls-row">
+					<label>Lumières</label>
+					<div class="ls-dots"></div>
+				</div>
+				<div class="ts-actions">
+					<button id="ls-cancel">Annuler</button>
+					<button id="ls-ok" class="ts-ok">OK</button>
 				</div>
 			</div>
+		</div>
+
+		<div id="turnSelector" class="hidden">
+			<div class="ts-panel">
+				<div class="ts-row" id="ts-row-0"></div>
+				<div class="ts-row" id="ts-row-1"></div>
+				<div class="ts-actions">
+				<button id="ts-cancel">Annuler</button>
+				<button id="ts-ok" class="ts-ok">OK</button>
+				</div>
+			</div>
+		</div>
 
 		<script>
 			window.IMG_ROOT_PATH = "";

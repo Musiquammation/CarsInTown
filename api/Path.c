@@ -9,6 +9,7 @@
 
 #include "CellTypeEnum.h"
 
+
 /* ── bit-field helpers ─────────────────────────────────────── */
 
 #define CELL_TYPE(c)          ((c) & 0xF)
@@ -47,11 +48,6 @@ static float getNonRoadCost(void) {
  * Convert a relative side value into a bitmask of absolute directions,
  * given the current facing direction.
  *
- * Side bit layout:
- *   bit 0 = front  → same as facing
- *   bit 1 = right  → (facing + 3) % 4   (clockwise)
- *   bit 2 = left   → (facing + 1) % 4   (counter-clockwise)
- *
  * Side values from spec:
  *   0 = nothing
  *   1 = front
@@ -63,12 +59,21 @@ static float getNonRoadCost(void) {
  *   7 = all
  */
 static int sideToAbsDirMask(int side, int facing) {
-	if (side == 0) return 0;
-	int mask = 0;
-	if (side & 1) mask |= (1 << facing);               /* front */
-	if (side & 2) mask |= (1 << ((facing + 3) % 4));   /* right */
-	if (side & 4) mask |= (1 << ((facing + 1) % 4));   /* left  */
-	return mask;
+	int front = facing;
+	int right = (facing + 3) % 4;
+	int left  = (facing + 1) % 4;
+
+	switch (side) {
+		case 0: return 0;
+		case 1: return (1 << front);
+		case 2: return (1 << right);
+		case 3: return (1 << left);
+		case 4: return (1 << front) | (1 << right);
+		case 5: return (1 << front) | (1 << left);
+		case 6: return (1 << left)  | (1 << right);
+		case 7: return (1 << front) | (1 << right) | (1 << left);
+		default: return 0;
+	}
 }
 
 /* ── A* node ───────────────────────────────────────────────── */
@@ -277,6 +282,7 @@ bool Path_make(Path *path, int startDir, int srcX, int srcY, int dstX, int dstY)
 			int first_dir   = DIR_FIRST_DIR(cell);
 			int second_dir  = DIR_SECOND_DIR(cell);
 
+
 			bool matched = false;
 			if (first_side  != 0 && first_dir  == cur->dir) {
 				dir_mask |= sideToAbsDirMask(first_side,  cur->dir);
@@ -288,6 +294,9 @@ bool Path_make(Path *path, int startDir, int srcX, int srcY, int dstX, int dstY)
 			}
 			if (!matched)
 				dir_mask = (1 << cur->dir); /* no rule for us: go straight */
+
+
+
 		} else {
 			dir_mask = (1 << cur->dir); /* ROAD, TARGET, YIELD, LIGHT: straight */
 		}

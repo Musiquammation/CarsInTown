@@ -74,8 +74,6 @@ export enum RoadType {
 	LIGHT,
 }
 
-export const ROADTYPES_COUNT = Object.keys(RoadType).length / 2;
-
 
 export function drawRoad(
 	ctx: CanvasRenderingContext2D,
@@ -179,10 +177,15 @@ export function onRoadRotation(road: road_t): road_t | null {
 }
 
 
-export function onRoadScroll(road: road_t, delta: number): road_t | 'light' | null {
+export function onRoadEdit(road: road_t):
+	road_t | 'light' | 'direction' | null
+{
 	switch (roadfn.getType(road)) {
 	case RoadType.LIGHT:
 		return 'light';
+
+	case RoadType.DIRECTION:
+		return 'direction';
 
 	default:
 		return null;
