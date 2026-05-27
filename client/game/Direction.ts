@@ -122,6 +122,8 @@ export function getDirectionDelta(direction: Direction) {
 }
 
 
+
+
 export function getCellDist(direction: Direction, x: number, y: number) {
 	let realMove;
 	switch (direction) {

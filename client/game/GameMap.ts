@@ -249,11 +249,18 @@ export class GameMap {
 			}
 
 
-			this.cars.push(new Car(
+			const car = new Car(
 				sx, sy,
 				dst, dir, pathId,
 				target.color,
-			));
+			);
+
+
+			if (car.appendSubTarget()) {
+				throw new Error("Car spawned and immediately reached its target");
+			}
+
+			this.cars.push(car);
 		}
 	}
 

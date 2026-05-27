@@ -12,7 +12,6 @@ import { PauseElement } from "../handler/PauseElement";
 import { HandSelection, handSelector } from "./HandSelector";
 import { produceStatsPanel } from "./produceStatsPanel";
 import { onRoadRotation, onRoadScroll, RoadType, ROADTYPES_COUNT } from "./roadtypes";
-import { road_t } from "./road_t";
 import { lightSelector } from "../handler/lightSelector";
 import { api } from "./Api";
 

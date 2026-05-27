@@ -6,6 +6,7 @@ declare global {
 		running: any;
 		startGame: any;
 		useRequestAnimationFrame: boolean;
+		SLOW_FPS: boolean;
 	}
 }
 
@@ -100,11 +101,10 @@ export function startGame() {
 		if (window.running) {
 			if (window.useRequestAnimationFrame) {
 				requestAnimationFrame(runGameLoop);
-			} else if (window.DEBUG) {
-				setTimeout(runGameLoop, 1000/3);
+			} else if (window.SLOW_FPS) {
+				setTimeout(runGameLoop, 1000/10);
 			} else {
 				setTimeout(runGameLoop, 1000/60);
-
 			}
 		}
 

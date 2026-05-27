@@ -20,7 +20,7 @@ LDFLAGS = -g3 \
 	-s ALLOW_MEMORY_GROWTH=1 \
 	-s EXPORT_ES6=1 \
     -s ENVIRONMENT=web \
-	-s EXPORTED_FUNCTIONS="['_Api_init','_Api_reserveCars','_Api_getDangers','_Api_cleanup','_Api_addPath','_Api_removePath','_Api_setRoad']" \
+	-s EXPORTED_FUNCTIONS="['_Api_init','_Api_reserveCars','_Api_getDangers','_Api_cleanup','_Api_addPath','_Api_removePath','_Api_movePath']" \
 	-s EXPORT_NAME="createModule" \
 	-s EXPORTED_RUNTIME_METHODS="['ccall','cwrap']"
 

@@ -14,6 +14,18 @@ let nextCarId = 0;
 type CarState = 'front' | 'turn-right' | 'turn-left';
 
 
+function getDirectionTurn(
+	origin: Direction,
+	target: Direction
+): CarState {
+	const diff = (target - origin + 4) % 4;
+
+	if (diff == 0 || diff == 2) return 'front';
+	if (diff == 1) return 'turn-left';
+	return 'turn-right';
+}
+
+
 export class Car {
 	state: CarState = 'front';
 	private direction: Direction;
@@ -32,6 +44,10 @@ export class Car {
 	target: Target;
 	step = 0.5;
 
+	private nextX = -1;
+	private nextY = -1;
+	private nextDir: number;
+
 	constructor(
 		x: number,
 		y: number,
@@ -46,6 +62,7 @@ export class Car {
 		this.direction = direction;
 		this.color = color;
 		this.pathId = pathfindingId;
+		this.nextDir = direction;
 	}
 
 	getCoords() {
@@ -88,15 +105,19 @@ export class Car {
 
 		case 'turn-right':
 		{
-			const {x,y} = getAttach(this.direction, true, this.step);
-			const a = Math.PI/2 * (this.direction + this.step);
+			let {x,y} = getAttach(this.direction, true, this.step);
+			const a = Math.PI/2 * (this.direction - this.step);
+			x += this.x;
+			y += this.y;
 			return {x, y, a};
 		}
 
 		case 'turn-left':
 		{
-			const {x,y} = getAttach(this.direction, true, this.step);
-			const a = Math.PI/2 * (this.direction - this.step);
+			let {x,y} = getAttach(this.direction, true, this.step);
+			const a = Math.PI/2 * (this.direction + this.step);
+			x += this.x;
+			y += this.y;
 			return {x, y, a};
 		}
 
@@ -116,7 +137,6 @@ export class Car {
 		ctx.imageSmoothingEnabled = false;
 		ctx.drawImage(iloader.get('car', this.color),
 			-CAR_SIZE/2, -CAR_LINE/2, CAR_SIZE, CAR_LINE);
-
 
 		ctx.restore();
 	}
@@ -171,15 +191,35 @@ export class Car {
 		
 
 		if (
-			this.x === this.target.x &&
-			this.y === this.target.y
+			this.x === this.nextX &&
+			this.y === this.nextY
 		) {
+			return this.appendSubTarget();
+		}
+
+		this.state = 'front';
+		
+		return false;
+	}
+
+	appendSubTarget() {
+		if (this.nextDir < 0) {
+			// Path is finished
 			this.removePath();
 			this.target.absorbeCar();
 			return true;
 		}
 
-		
+		// Next node
+		const {x, y, dir} = api.stepCar(this.pathId);
+		this.state = getDirectionTurn(
+			this.direction,
+			this.nextDir
+		);
+		this.nextX = x;
+		this.nextY = y;
+		this.nextDir = dir;
+
 		return false;
 	}
 

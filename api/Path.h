@@ -1,16 +1,14 @@
 #pragma once
 
+#include "PathStep.h"
 #include <stdbool.h>
 
 
-typedef struct Step {
-    int x;
-    int y;
-    int dir;
-} Step;
+
 
 typedef struct Path {
-	Step* steps;
+	PathStep* steps;
+    int step;
 	int length;
 } Path;
 

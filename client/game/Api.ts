@@ -14,13 +14,13 @@ class Api {
 	private _addPath!: (firstDir: number, srcX: number, srcY: number,
 		dstX: number, dstY: number) => number;
 	private _removePath!: (id: number) => void;
-	private _setRoad!: (idx: number, road: road_t) => void;
+	private _movePath!: (id: number) => number;
 	private _cleanup!: () => void;
 
 	private _ready: Promise<void>;
 	private _resolveReady!: () => void;
 
-	private module: any;
+	private module: any = null;
 	private mapPtr = -1;
 
 	constructor() {
@@ -41,8 +41,8 @@ class Api {
 		this._removePath = module.cwrap("Api_removePath",
 			null, ["number"]);
 
-		this._setRoad = module.cwrap("Api_setRoad",
-			null, ["number", "number"]);
+		this._movePath = module.cwrap("Api_movePath",
+			"number", ["number"]);
 
 		this._cleanup = module.cwrap("Api_cleanup", null, []);
 		
@@ -128,7 +128,20 @@ class Api {
 		this.module.HEAP16[this.mapPtr + idx] = road;
 	}
 
+	stepCar(id: number) {
+		if (this.module === null) {
+			throw new Error("Module is not loaded");
+		}
 
+		const ptr = this._movePath(id);
+
+		let offset = ptr >> 2;
+		const x = this.module.HEAP32[offset++];
+		const y = this.module.HEAP32[offset++];
+		const dir = this.module.HEAP32[offset++];
+
+		return {x, y, dir};
+	}
 }
 
 

@@ -43,7 +43,7 @@ export class MapConstructor {
 
 		// Set roads
 		for (const road of this.roads) {
-			// cmap.setRoad(road.x, road.y, road.data);
+			cmap.setRoad(road.x, road.y, road.data);
 		}
 
 
@@ -88,8 +88,8 @@ export class MapConstructor {
 			cmap.setRoad(n, i, voidRoad);
 		}
 
-
 		cmap.setRoad(n, n, voidRoad);
+
 
 
 		return cmap;

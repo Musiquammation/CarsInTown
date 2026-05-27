@@ -9,10 +9,6 @@
 #include <stdlib.h>
 
 
-#if PRINT_LOGS
-#include <stdio.h>
-#endif
-
 
 Api api;
 
@@ -36,6 +32,10 @@ cell_t* Api_init(int mapSize) {
 }
 
 void Api_cleanup() {
+	for (int i = 0; i < api.path_reserved; i++) {
+		Path_destroy(&api.paths[i]);
+	}
+	free(api.paths);
 	free(api.cars);
 	free(api.map);
 }
@@ -122,7 +122,11 @@ void Api_removePath(int id) {
 }
 
 
-void Api_setRoad(int idx, int road) {
-	road &= ~(1<<15); // remove car mark
-	api.map[idx] = (cell_t)road;
+int* Api_movePath(int id) {
+	Path* path = &api.paths[id];
+	path->step++;
+	if (path->step >= path->length)
+		return NULL;
+
+	return (int*)&path->steps[path->step];
 }

@@ -80,14 +80,18 @@ const LEVELS: MapConstructor[] = [
 		
 
 		roads: [
-			...rect(10,15,10,1,1)
+			...rect(3, 3, 5, 1, 1),
+			...rect(8, 3, 1, 5, 1),
+			...rect(8, 8, 5, 1, 1),
+			{x: 8, y: 3, data: 3 | (3<<4) | (3<<12)}
+
 		],
 
 		targets: [
 			{
 				label: "rA",
 				x: 3, y: 3,
-				spawnCount: 1,
+				spawnCount: 2,
 				spawnDelay: 15,
 				color: CarColor.RED,
 				targets: ["rB"]
@@ -95,7 +99,7 @@ const LEVELS: MapConstructor[] = [
 
 			{
 				label: "rB",
-				x: 8, y: 3,
+				x: 8, y: 8,
 				spawnCount: 0,
 				spawnDelay: 15,
 				color: CarColor.RED,
@@ -104,8 +108,8 @@ const LEVELS: MapConstructor[] = [
 			
 			{
 				label: "rC",
-				x: 8, y: 8,
-				spawnCount: 10,
+				x: 13, y: 8,
+				spawnCount: 0,
 				spawnDelay: 15,
 				color: CarColor.RED,
 				targets: []

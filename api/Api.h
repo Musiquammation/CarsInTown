@@ -28,4 +28,4 @@ int* Api_reserveCars(int length);
 void Api_getDangers();
 int Api_addPath(int startDir, int srcX, int srcY, int dstX, int dstY);
 void Api_removePath(int id);
-void Api_setRoad(int idx, int road);
+int* Api_movePath(int id);
