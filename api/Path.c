@@ -345,7 +345,6 @@ cleanup:
 void Path_destroy(Path *path) {
 	free(path->steps);
 	path->steps  = NULL;
-	path->length = 0;
 }
 
 bool Path_isAlive(const Path *path) {

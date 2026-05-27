@@ -23,7 +23,7 @@ cell_t* Api_init(int mapSize) {
 
 
 	api.map = calloc(mapSize*mapSize, sizeof(cell_t));
-	api.paths = calloc(api.path_reserved, sizeof(cell_t));
+	api.paths = calloc(api.path_reserved, sizeof(Path));
 	api.cars = (Car*)malloc(sizeof(Car) * api.cars_reserved);
 	api.cars_length = 0;
 	api.map_size = mapSize;

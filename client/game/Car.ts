@@ -29,8 +29,8 @@ function getDirectionTurn(
 export class Car {
 	state: CarState = 'front';
 	private direction: Direction;
-	private speedLimit = .2;
-	private realSpeed = 0.2;
+	private speedLimit = .1;
+	private realSpeed = this.speedLimit;
 	private publicSpeed = 0;
 
 	color: CarColor;
@@ -42,7 +42,7 @@ export class Car {
 	x: number;
 	y: number;
 	target: Target;
-	step = 0.5;
+	step = 0;
 
 	private nextX = -1;
 	private nextY = -1;
@@ -62,6 +62,7 @@ export class Car {
 		this.direction = direction;
 		this.color = color;
 		this.pathId = pathfindingId;
+		console.log("pathId",pathfindingId);
 		this.nextDir = direction;
 	}
 

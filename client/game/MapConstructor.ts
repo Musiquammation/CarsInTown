@@ -69,8 +69,25 @@ export class MapConstructor {
 				return value;
 			});
 
+
+			let symbol = 26;
+			if (i.label.length === 2) {
+				const c = i.label.charCodeAt(1);
+
+				if (c >= 65 && c <= 90) { // A-Z
+					symbol = c - 65;
+				} else if (c >= 97 && c <= 122) { // a-z
+					return c - 97;
+				} else if (c >= 48 && c <= 53) {
+					return 26 + (c - 48);
+				}
+			}
+
 			cmap.addTarget(t);
-			cmap.setRoad(t.x, t.y, RoadType.TARGET);
+			cmap.setRoad(
+				t.x,
+				t.y,
+				RoadType.TARGET | (i.color<<4) || (symbol<<7));
 		}
 
 		

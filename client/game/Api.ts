@@ -112,7 +112,6 @@ class Api {
 			const id = HEAP32[offset++];
 			const car = cars[id];
 			const acc = HEAPF32[offset++];
-			console.log(acc);
 			const speedLimit = HEAPF32[offset++];
 			car.behave(speedLimit, acc);
 		}

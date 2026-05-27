@@ -24,6 +24,8 @@ export class GameMap {
 	static readonly LIGHT_COULDOWN = 180;
 
 	size: number;
+	carsToEnterGoal = 0;
+	enteredCars = 0;
 	
 	private grid: Uint16Array;
 	private cars = new Array<Car>();
@@ -92,8 +94,7 @@ export class GameMap {
 				ctx.save();
 				ctx.translate(x, y);
 				drawRoad(ctx, iloader, obj, this.lightStep);
-				ctx.restore();
-				
+				ctx.restore();	
 			}
 		}
 	}
@@ -285,6 +286,7 @@ export class GameMap {
 
 		this.lightStep = 0;
 		this.lightCooldown = 0;
+		this.enteredCars = 0;
 
 	}
 }
