@@ -39,6 +39,7 @@ export class Game extends GameState {
 	private lightTick = 0;
 	private lightTickCouldown = 0;
 	private statsPanel?: HTMLDivElement;
+	private running = true;
 
 
 
@@ -155,6 +156,7 @@ export class Game extends GameState {
 		this.runningCars = false;
 		this.lightTick = 0;
 		this.lightTickCouldown = 0;
+		this.running = true;
 
 		if (this.gameMap) {this.gameMap.reset();}
 
@@ -480,8 +482,9 @@ export class Game extends GameState {
 
 
 		
-
-		this.carFrame++;
+		if (this.running) {
+			this.carFrame++;
+		}
 	}
 
 	placeKeyboardRoads(input: InputHandler) {
@@ -535,6 +538,18 @@ export class Game extends GameState {
 				(window as any).fastView = false;
 			}
 		}
+
+		// End of game
+		const cmap = this.gameMap;
+		if (
+			cmap && this.running &&
+			cmap.enteredCars >= cmap.carsToEnterGoal
+		) {
+			this.running = false;
+			const msg = "Score: " + this.formatTime();
+			alert(msg);
+			console.log(msg)
+		}
 	
 		return null;
 	}
@@ -556,28 +571,27 @@ export class Game extends GameState {
 		}
 	}
 
+	private formatTime() {
+		const time = this.carFrame;
+		const totalSeconds = Math.floor(time / 60);
+		const minutes = Math.floor(totalSeconds / 60);
+		const seconds = totalSeconds % 60;
+		const milliseconds = Math.floor((time % 60) / 6);
+		return `${minutes.toString().padStart(1, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds}`;
+
+	}
 
 	private drawStats(ctx: CanvasRenderingContext2D) {
 		const gmap = this.gameMap;
 		if (!gmap) {
-			timeLeftDiv.innerText = "00:00.0";
+			timeLeftDiv.innerText = "0:00.0";
 			scoreDiv.innerText = (0).toString().padStart(3, "0");
 			return;
 		}
 
 		const left = gmap.carsToEnterGoal - gmap.enteredCars;
 		scoreDiv.innerText =  left.toString().padStart(3, "0");
-
-		const leftTime: string = (() => {
-			const time = this.carFrame;
-			const totalSeconds = Math.floor(time / 60);
-			const minutes = Math.floor(totalSeconds / 60);
-			const seconds = totalSeconds % 60;
-			const milliseconds = Math.floor((time % 60) / 6);
-			return `${minutes.toString().padStart(1, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds}`;
-		})();
-
-		timeLeftDiv.innerText = leftTime;
+		timeLeftDiv.innerText = this.formatTime();
 	}
 
 	draw(args: DrawStateData): void {
