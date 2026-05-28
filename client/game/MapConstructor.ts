@@ -73,7 +73,7 @@ export class MapConstructor {
 			});
 
 
-			let symbol = 26;
+			let symbol = 22;
 			if (i.label.length === 2) {
 				const c = i.label.charCodeAt(1);
 
@@ -81,8 +81,14 @@ export class MapConstructor {
 					symbol = c - 65;
 				} else if (c >= 97 && c <= 122) { // a-z
 					symbol = c - 97;
-				} else if (c >= 48 && c <= 53) {
+				} else if (c >= 48 && c <= 53) { // number
 					symbol = 26 + (c - 48);
+				} else if (c === 43) { // +
+					symbol = 24;
+				} else if (c === 45) { // -
+					symbol = 23;
+				} else if (c === 95) { // _
+					symbol = 22;
 				}
 			}
 
@@ -90,7 +96,7 @@ export class MapConstructor {
 			cmap.setRoad(
 				t.x,
 				t.y,
-				RoadType.TARGET | (i.color<<4) || (symbol<<7));
+				RoadType.TARGET | (i.color<<4) | (symbol<<7));
 		}
 
 

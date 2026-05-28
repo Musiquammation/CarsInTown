@@ -131,7 +131,7 @@ export class GameHandler {
 			"#ac3232",
 			GAME_COLORS,
 			{
-				consumer: "assets/consumer.png",
+				consumers: "assets/consumers.png",
 				spawner: "assets/spawner.png",
 				car: 'assets/car.png'
 			}

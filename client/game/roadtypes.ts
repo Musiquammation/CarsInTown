@@ -81,13 +81,40 @@ export function drawRoad(
 	road: road_t,
 	lightStep: number
 ) {
-	function drawImage(name: string, angle: number, flip = {x: false, y: false, color: -1}) {
+	interface DrawData {
+		x: boolean;
+		y: boolean;
+		color?: number;
+		decalage?: {x: number, y: number, w: number, h: number}
+	}
+
+	function drawImage(
+		name: string,
+		angle: number,
+		data: DrawData = {x: false, y: false}
+	) {
 		ctx.save();
 		ctx.translate(0.5, 0.5);
 		ctx.rotate(-angle);
-		ctx.scale(flip.x ? -1 : 1, flip.y ? -1 : 1);
+		ctx.scale(data.x ? -1 : 1, data.y ? -1 : 1);
 		ctx.imageSmoothingEnabled = false;
-		ctx.drawImage(iloader.get(name, flip.color), -0.5, -0.5, 1, 1);
+		const color = data.color === undefined ? -1 : data.color;
+
+		const img = iloader.get(name, color);
+		const decalage = data.decalage;
+		if (decalage) {
+			ctx.drawImage(
+				img, 
+				decalage.x * decalage.w,
+				decalage.y * decalage.h,
+				decalage.w,
+				decalage.h,
+				-0.5, -0.5, 1, 1
+			);
+
+		} else {
+			ctx.drawImage(img, -0.5, -0.5, 1, 1);
+		}
 		ctx.restore();
 	}
 
@@ -133,8 +160,14 @@ export function drawRoad(
 	case RoadType.TARGET:
 	{
 		const color: CarColor = (road >> 4) & 0x7;
-		const direction: Direction = (road >> 6) & 0x3;
-		drawImage('consumer', direction * Math.PI/2, {x: false, y: false, color: color});
+		const symbol = (road >> 7) & 0x1f;
+		drawImage(
+			'consumers', 0,
+			{x: false, y: false, color: color, decalage: {
+				x: symbol, y: 0,
+				w: 16, h: 16
+			}}
+		);
 		break;
 	}
 
