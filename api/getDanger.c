@@ -288,10 +288,14 @@ static void checkPriority(Buffer* buffer, Spy spy0, int frontDist) {
 				}
 
 				case CELL_LIGHT: {
+					if (((cell >> 12) & 0x3) != spy->oppDir)
+						break; // wrong light direction
+
 					if ((cell & buffer->lightStepFlag) == 0) {
 						// Light is red
 						goto deleteSpy;
 					}
+					
 					break;
 				}
 	
@@ -482,7 +486,7 @@ int getDanger(Car* car) {
 					goto defaultDetection; // wrong light direction
 
 
-				if (cell & bff.lightStepFlag) {
+				if ((cell & bff.lightStepFlag) == 0) {
 					appendStopDist(
 						&bff,
 						(float)dist - bff.car.step - CAR_WIDTH/2,

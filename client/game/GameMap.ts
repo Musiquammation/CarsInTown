@@ -30,8 +30,8 @@ export class GameMap {
 	private grid: Uint16Array;
 	private cars = new Array<Car>();
 	private targets = new Map<bigint, Target>();
-	private lightStep = 0;
-	private lightCooldown = 0;
+	private lightTick = 0;
+	private lightTickCooldown = 0;
 
 	constructor(size: number) {
 		this.size = size;
@@ -93,7 +93,7 @@ export class GameMap {
 				
 				ctx.save();
 				ctx.translate(x, y);
-				drawRoad(ctx, iloader, obj, this.lightStep);
+				drawRoad(ctx, iloader, obj, this.lightTick);
 				ctx.restore();	
 			}
 		}
@@ -161,11 +161,11 @@ export class GameMap {
 		this.targets.set(GameMap.mapKey(target.x, target.y), target);
 	}
 
-	moveLightStep() {
-		this.lightCooldown++;
-		if (this.lightCooldown >= GameMap.LIGHT_COULDOWN) {
-			this.lightCooldown -= GameMap.LIGHT_COULDOWN;
-			this.lightStep = (this.lightStep + 1) % 8;
+	runLightTick() {
+		this.lightTickCooldown++;
+		if (this.lightTickCooldown >= GameMap.LIGHT_COULDOWN) {
+			this.lightTickCooldown -= GameMap.LIGHT_COULDOWN;
+			this.lightTick = (this.lightTick + 1) % 8;
 		}
 	}
 
@@ -270,7 +270,7 @@ export class GameMap {
 	}
 
 	updateCars() {
-		api.getDangers(this.cars, this.lightStep);
+		api.getDangers(this.cars, this.lightTick);
 	}
 
 	reset() {
@@ -288,9 +288,13 @@ export class GameMap {
 			target.reset();
 		}
 
-		this.lightStep = 0;
-		this.lightCooldown = 0;
+		this.lightTick = 0;
+		this.lightTickCooldown = 0;
 		this.enteredCars = 0;
 
+	}
+
+	getLightTick() {
+		return this.lightTick;
 	}
 }

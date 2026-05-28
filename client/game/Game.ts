@@ -37,8 +37,6 @@ export class Game extends GameState {
 	private lastScreenMouseX = NaN;
 	private lastScreenMouseY = NaN;
 	private lastMouseY = 0;
-	private lightTick = 0;
-	private lightTickCouldown = 0;
 	private statsPanel?: HTMLDivElement;
 	private running = true;
 
@@ -154,15 +152,13 @@ export class Game extends GameState {
 		this.score = 0;
 		this.carFrame = 0;
 		this.runningCars = false;
-		this.lightTick = 0;
-		this.lightTickCouldown = 0;
 		this.running = true;
 
 		if (this.gameMap) {this.gameMap.reset();}
 
 
 		(document.getElementById("pause") as PauseElement|null)?.togglePause(false);
-		lightTurnDiv.textContent = this.lightTick.toString().padStart(2, '0');
+		lightTurnDiv.textContent = "00";
 	}
 
 	private handleHTML() {
@@ -528,27 +524,21 @@ export class Game extends GameState {
 		}
 	}
 
-	runLightTicks() {
-		this.lightTickCouldown++;
-		if (this.lightTickCouldown >= LIGHT_TICK) {
-			this.lightTickCouldown -= LIGHT_TICK;
-			this.lightTick++;
-			if (this.lightTick >= 8) {
-				this.lightTick -= 8;
-			}
-			lightTurnDiv.textContent = this.lightTick.toString().padStart(2, '0');
-		}
-	}
-
+	
 	frame(game: GameHandler) {
 		(window as any).fastView = game.inputHandler.first('fastView');
 
 		let times = game.inputHandler.press('fastView') ? FAST_TIMES : 1;
 		this.placeKeyboardRoads(game.inputHandler);
 
+
+		const cmap = this.gameMap;
+
 		for (let i = 0; i < times; i++) {
 			if (this.runningCars) {
-				this.runLightTicks();
+				if (cmap) {
+					cmap.runLightTick();
+				}
 
 				this.runCars();
 				(window as any).fastView = false;
@@ -556,7 +546,6 @@ export class Game extends GameState {
 		}
 
 		// End of game
-		const cmap = this.gameMap;
 		if (
 			cmap && this.running &&
 			cmap.enteredCars >= cmap.carsToEnterGoal
@@ -579,7 +568,8 @@ export class Game extends GameState {
 		const road = gmap.getRoad(x, y);
 		if (roadfn.getType(road) === RoadType.LIGHT) {
 			lightSelector.take(road, data => {
-				if (data) {
+				if (data !== null) {
+					console.log("set", data | RoadType.LIGHT);
 					gmap.setRoad(x, y, data | RoadType.LIGHT);
 				}
 			});
@@ -624,6 +614,9 @@ export class Game extends GameState {
 		const left = gmap.carsToEnterGoal - gmap.enteredCars;
 		scoreDiv.innerText =  left.toString().padStart(3, "0");
 		timeLeftDiv.innerText = this.formatTime();
+
+		lightTurnDiv.textContent = gmap.getLightTick()
+			.toString().padStart(2, "0");
 	}
 
 	draw(args: DrawStateData): void {
