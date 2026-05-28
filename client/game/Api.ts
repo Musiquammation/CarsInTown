@@ -81,6 +81,8 @@ class Api {
 		let offset = ptr >> 2;
 		for (let i = 0; i < cars.length; i++) {
 			const car = cars[i];
+
+			// Get useful direction
 			let dir = car.getDirection();
 			if (car.state == 'turn-left') {
 				dir = (dir+1)%4;

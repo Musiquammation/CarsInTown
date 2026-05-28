@@ -257,6 +257,7 @@ static void checkPriority(Buffer* buffer, Spy spy0, int frontDist) {
 		for (SpyNode *spy = head, *prev = NULL; spy; ) {
 			spy->dist++;
 			moveSpyNode(spy);
+			bool jumpToDeleteSpy = false;
 	
 			cell_t cell = take(spy->x, spy->y);
 			switch (cell & 0xf) {
@@ -278,9 +279,6 @@ static void checkPriority(Buffer* buffer, Spy spy0, int frontDist) {
 				}
 	
 				case CELL_YIELD: {
-					if (spy->dist == 1) // car is running red light
-						break;
-
 					if (((cell >> 6) & 0x3) == spy->oppDir) {
 						/**
 						 * TODO: skip block and continue with others
@@ -295,6 +293,13 @@ static void checkPriority(Buffer* buffer, Spy spy0, int frontDist) {
 						break; // wrong light direction
 
 					if ((cell & buffer->lightStepFlag) == 0) {
+						if (spy->dist == 1) {
+							// Car is running red light
+							jumpToDeleteSpy = true;
+							goto checkCar;
+						}
+
+
 						// Light is red
 						goto deleteSpy;
 					}
@@ -307,6 +312,7 @@ static void checkPriority(Buffer* buffer, Spy spy0, int frontDist) {
 	
 	
 			// Check car presence
+			checkCar:
 			if (cell & (1<<15)) {
 				Car* other = getCar(spy->x, spy->y);
 				if (other == buffer->carPtr)
@@ -355,6 +361,9 @@ static void checkPriority(Buffer* buffer, Spy spy0, int frontDist) {
 				buffer->hasGotPriority = true;
 
 			}
+
+			if (jumpToDeleteSpy)
+				goto deleteSpy;
 	
 			// Next node
 			nextSpy:
@@ -432,7 +441,7 @@ int getDanger(Car* car) {
 			case CELL_VOID: {
 				appendStopDist(
 					&bff,
-					(float)dist - car->step - CAR_WIDTH/2,
+					(float)dist - bff.car.step - CAR_WIDTH/2,
 					SOFT_DECELERATION
 				);
 				goto finish;
@@ -465,10 +474,14 @@ int getDanger(Car* car) {
 					stopDist = (float)dist + shrinkedStep - bff.car.step - CAR_WIDTH/2;
 
 				} else if (otherDirection == ((spy.dir+2)%4)) {
-					return 2; // case to handle
+					if (dist == 0)
+						return 2; // collision
+
+					/// TODO: handle cars in opposite direction
+					break;
 
 				} else { // Side direction
-					stopDist = (float)dist - other->step + (
+					stopDist = (float)dist - bff.car.step + (
 						(1-CAR_HEIGHT)/2 - CAR_WIDTH/2);
 				}
 
