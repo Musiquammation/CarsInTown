@@ -244,6 +244,32 @@ static void appendStopDist(Buffer* bff, float dist, float deceleration) {
 }
 
 
+
+/**
+ * @warn cell must have CELL_DIRECTION type
+ */
+static bool branchSpies(cell_t cell, SpyNode* node) {
+	int side0 = (cell >> 4) & 0x7;
+	int side1 = (cell >> 7) & 0x7;
+	Direction dir0 = (cell >> 10) & 0x3;
+	Direction dir1 = (cell >> 12) & 0x3;
+	
+
+
+	finish:
+
+
+	/**
+	 * TODO: handle loops
+	 * 
+	 * TODO: handle multiple choices => (list (x,y,dir),
+	 * then for each car call pathfinder)
+	 */
+
+
+	 return true;
+}
+
 static void checkPriority(Buffer* buffer, Spy spy0, int frontDist) {
 	SpyNode* head = malloc(sizeof(SpyNode));
 	head->x = spy0.x;
@@ -270,7 +296,7 @@ static void checkPriority(Buffer* buffer, Spy spy0, int frontDist) {
 				}
 	
 				case CELL_TARGET: {
-					/// TODO: handle cars skipping the target (in pathfinding?)
+					/// TODO: call branchSpies
 					goto deleteSpy;
 				}
 	
