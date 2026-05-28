@@ -40,7 +40,7 @@ export class LevelsState extends GameState {
 
 	exit() {
 		if (window.DEBUG) {
-			return LEVELS[0];
+			return LEVELS[1];
 			
 		} else {
 			const v = prompt(`Level? [1 to ${LEVELS.length-1}]`);
@@ -74,8 +74,8 @@ function rect(x: number, y: number, w: number, h: number, data=8) {
 
 
 const LEVELS: MapConstructor[] = [
+	// Debug
 	new MapConstructor({
-		time: 100*60,
 		size: 32,
 		
 
@@ -135,6 +135,56 @@ const LEVELS: MapConstructor[] = [
 				color: CarColor.YELLOW,
 				targets: []
 			}
+		]
+	}),
+
+
+	// Level 1
+	new MapConstructor({
+		size: 32,
+
+		roads: [],
+
+		targets: [
+			{
+				label: "rA",
+				x: 1, y: 15,
+				spawnCount: 1,
+				spawnDelay: 60,
+				targets: ["rB"]
+			},
+
+			{
+				label: "rB",
+				x: 30, y: 15,
+				spawnCount: 0,
+				spawnDelay: 1,
+				targets: ["rC"]
+			},
+
+			{
+				label: "rC",
+				x: 15, y: 20,
+				spawnCount: 0,
+				spawnDelay: 60,
+				targets: []
+			},
+
+			{
+				label: "c+",
+				x: 16, y: 1,
+				spawnCount: 100,
+				spawnDelay: 60,
+				targets: ["c-"]
+			},
+
+			{
+				label: "c-",
+				x: 16, y: 30,
+				spawnCount: 100,
+				spawnDelay: 20,
+				targets: []
+			},
 		]
 	})
 ];

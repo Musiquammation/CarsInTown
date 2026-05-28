@@ -35,7 +35,6 @@ export class MapConstructor {
 
 	roads: Road[] = [];
 	targets: TargetProto[] = [];
-	time = 0;
 	size = 32;
 
 	create() {
@@ -66,7 +65,8 @@ export class MapConstructor {
 			t.directions = i.targets.map(label => {
 				const value = targets.get(label);
 				if (!value) {
-					throw new Error("Cannot find key: " + value);
+					console.log(label);
+					throw new Error("Cannot find label: '" + label + "'");
 				}
 
 				return value;
@@ -122,10 +122,6 @@ export class MapConstructor {
 
 
 	appendJSON(data: any) {
-		const time: number | undefined = data.time;
-		if (time !== undefined)
-			this.time = time;
-
 		const size: number | undefined = data.size;
 		if (size !== undefined)
 			this.size = size;
@@ -138,6 +134,22 @@ export class MapConstructor {
 		if (targets !== undefined)
 			this.targets.push(...targets);
 
+		for (const i of this.targets) {
+			if (i.color === undefined) {
+				const firstChar = i.label[0]?.toLowerCase();
+				switch (firstChar) {
+					case 'r': i.color = CarColor.RED; break;
+					case 'y': i.color = CarColor.YELLOW; break;
+					case 'b': i.color = CarColor.BLUE; break;
+					case 'g': i.color = CarColor.GREEN; break;
+					case 'c': i.color = CarColor.CYAN; break;
+					case 'p': i.color = CarColor.PINK; break;
+					case 'w': i.color = CarColor.WHITE; break;
+					case 'x': i.color = CarColor.GRAY; break;
+					default: throw new Error("Cannot deduce color from " + data.label);
+				}
+			}
+		}
 	}
 
 	setCamera(camera: {x: number, y: number, z: number}) {

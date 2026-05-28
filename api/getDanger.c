@@ -192,7 +192,11 @@ static void moveSpyNode(SpyNode* spy) {
 	spy->y += DY[spy->dir];
 }
 
-static cell_t take(int x, int y) {
+static cell_t cellAt(int x, int y) {
+	if (x < 0 || y < 0 || x >= api.map_size || y >= api.map_size) {
+        return 0; 
+    }
+	
 	return api.map[y * api.map_size + x];
 }
 
@@ -285,7 +289,7 @@ static void checkPriority(Buffer* buffer, Spy spy0, int frontDist) {
 			moveSpyNode(spy);
 			bool jumpToDeleteSpy = false;
 	
-			cell_t cell = take(spy->x, spy->y);
+			cell_t cell = cellAt(spy->x, spy->y);
 			switch (cell & 0xf) {
 				case CELL_VOID: {
 					goto deleteSpy;
@@ -456,7 +460,7 @@ int getDanger(Car* car) {
 	Spy spy = {bff.car.x, bff.car.y, bff.car.direction};
 
 	for (int dist = 0; dist <= FRONT_RANGE; dist++) {
-		cell_t cell = take(spy.x, spy.y);
+		cell_t cell = cellAt(spy.x, spy.y);
 
 		bool checkLeft;
 		bool checkRight;

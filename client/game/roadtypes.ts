@@ -75,6 +75,84 @@ export enum RoadType {
 }
 
 
+
+function drawDirection(
+	ctx: CanvasRenderingContext2D,
+	road: road_t,
+	drawImage: any
+) {
+	const side0 = (road >> 4) & 0x7;
+	const side1 = (road >> 7) & 0x7;
+	const dir0 = (road >> 10) & 0x3;
+	const dir1 = (road >> 12) & 0x3;
+
+
+	if (side0 === 0 && side1 === 0) {
+		// No direction
+		ctx.fillStyle = "#ddd";
+		ctx.fillRect(0, 0, 1, 1);
+		return;
+	}
+
+	let uniqueSide = -1;
+	let uniqueDir = -1;
+	if (side0 === 0 && side1 !== 0) {
+		uniqueSide = side1;
+		uniqueDir = dir1;
+	} else if (side0 !== 0 && side1 === 0) {
+		uniqueSide = side0;
+		uniqueDir = dir0;
+	}
+
+
+	// Draw both sides
+	if (uniqueSide < 0) {
+		/// TODO: draw both sides
+		drawImage(null, 0);
+		return;
+	}
+
+	// Draw unique side
+	const angle = Math.PI/2 * uniqueDir;
+	switch (uniqueSide) {
+		case 1: // front
+			drawImage('turn_front', angle);
+			break;
+			
+		case 2: // right
+			drawImage('turn_turn', angle, {x: false, y: false});
+			break;
+
+		case 3: // left
+			drawImage('turn_turn', angle, {x: false, y: true});
+			break;
+
+		case 4: // front-right
+			drawImage('turn_both', angle, {x: false, y: false});
+			break;
+
+		case 5: // front-left
+			drawImage('turn_both', angle, {x: false, y: true});
+			break;
+
+		case 6: // left-right
+			drawImage('turn_split', angle);
+			break;
+
+		case 7: // all
+			drawImage('turn_all', angle);
+			break;
+		
+
+
+	}
+
+
+
+
+
+}
+
 export function drawRoad(
 	ctx: CanvasRenderingContext2D,
 	iloader: ImageLoader,
@@ -89,7 +167,7 @@ export function drawRoad(
 	}
 
 	function drawImage(
-		name: string,
+		name: string | null,
 		angle: number,
 		data: DrawData = {x: false, y: false}
 	) {
@@ -138,8 +216,7 @@ export function drawRoad(
 
 	case RoadType.DIRECTION:
 	{
-		ctx.fillStyle = "#f00";
-		ctx.fillRect(0, 0, 1, 1);
+		drawDirection(ctx, road, drawImage);
 		return;
 	}
 

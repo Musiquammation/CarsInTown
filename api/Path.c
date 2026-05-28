@@ -27,6 +27,15 @@
 static const int DX[4] = {  1,  0, -1,  0 };
 static const int DY[4] = {  0, -1,  0,  1 };
 
+static cell_t cellAt(int x, int y) {
+	if (x < 0 || y < 0 || x >= api.map_size || y >= api.map_size) {
+        return 0; 
+    }
+	
+	return api.map[y * api.map_size + x];
+}
+
+
 /* ── cost helpers ──────────────────────────────────────────── */
 
 static float evalCost(int weight) {
@@ -259,7 +268,7 @@ bool Path_make(Path *path, int startDir, int srcX, int srcY, int dstX, int dstY)
 			goto cleanup;
 		}
 
-		cell_t cell = api.map[cur->y * size + cur->x];
+		cell_t cell = cellAt(cur->x, cur->y);
 		int    type = CELL_TYPE(cell);
 
 		/*
@@ -309,7 +318,7 @@ bool Path_make(Path *path, int startDir, int srcX, int srcY, int dstX, int dstY)
 			int ny = cur->y + DY[d];
 			if (nx < 0 || ny < 0 || nx >= size || ny >= size) continue;
 
-			cell_t ncell = api.map[ny * size + nx];
+			cell_t ncell = cellAt(nx, ny);
 			int    ntype = CELL_TYPE(ncell);
 
 			if (ntype == CELL_VOID) continue; /* impassable */

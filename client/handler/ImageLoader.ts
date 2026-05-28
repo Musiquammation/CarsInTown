@@ -153,7 +153,10 @@ export class ImageLoader {
 		return this.loadedCount === this.totalCount;
 	}
 
-	get(name: string, color = -1): HTMLCanvasElement | HTMLImageElement {
+	get(name: string | null, color = -1): HTMLCanvasElement | HTMLImageElement {
+		if (name === null)
+			return this.placeholder;
+		
 		if (color >= 0) {
 			const folder = this.folders['colored'];
 			if (folder && folder[name] && folder[name][color] !== undefined)

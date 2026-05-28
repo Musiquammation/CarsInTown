@@ -20,7 +20,7 @@ export const HAND_SELECTION_ICONS = [
 	'icon_rotate',
 	'icon_move',
 
-	'turn',
+	'turn_turn',
 	'yield',
 	'light_green'
 ];

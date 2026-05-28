@@ -73,13 +73,11 @@ export class GameHandler {
 
 		// Load game assets
 		this.imgLoader.load({
-			turn: "assets/turn/turn.png",
-			all0: "assets/turn/all0.png",
-			all1: "assets/turn/all1.png",
-			all2: "assets/turn/all2.png",
-			all3: "assets/turn/all3.png",
-			all4: "assets/turn/all4.png",
-			all5: "assets/turn/all5.png",
+			turn_turn: "assets/turn/turn.png",
+			turn_front: "assets/turn/front.png",
+			turn_both: "assets/turn/both.png",
+			turn_all: "assets/turn/all.png",
+			turn_split: "assets/turn/split.png",
 			yield: "assets/yield.png",
 			light_red: "assets/lights/red.png",
 			light_orange: "assets/lights/orange.png",

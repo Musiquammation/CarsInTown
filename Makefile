@@ -15,8 +15,10 @@ CFLAGS = -I$(SRC_DIR) -MMD -MP -DPRINT_LOGS=$(PRINT)
 
 LDFLAGS = -g3 \
 	-Wall -Wextra \
+	-gsource-map \
 	-s MODULARIZE=1 \
 	-s ASSERTIONS=2 \
+	-s STACK_OVERFLOW_CHECK=2 \
 	-s ALLOW_MEMORY_GROWTH=1 \
 	-s EXPORT_ES6=1 \
     -s ENVIRONMENT=web \
