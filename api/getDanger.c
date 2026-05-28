@@ -25,7 +25,7 @@ static const int FRONT_RANGE = 64;
 static const int PRIORITY_RANGE = 32;
 static const float SOFT_DECELERATION = .002f;
 static const float FRONT_DECELERATION = .009f;
-static const float MAX_ACCELERATION = .02f;
+static const float MAX_ACCELERATION = .003f;
 static const int SPEED_FACTOR = 30;
 
 
@@ -408,7 +408,7 @@ int getDanger(Car* car) {
 		.car = *car,
 		.carPtr = car,
 		.carSpeed2 = car->speed * car->speed,
-		.maxAcc = car->speedLimit,
+		.maxAcc = MAX_ACCELERATION,
 		.slow = INFINITY_F,
 		.fast = -INFINITY_F,
 		.hasGotPriority = false,
