@@ -23,7 +23,6 @@ const mousePosDiv = document.getElementById("mousePos")!;
 const lightTurnDiv = document.getElementById("lightTurn")!;
 
 const FAST_TIMES = 4;
-const LIGHT_TICK = 45;
 
 
 export class Game extends GameState {

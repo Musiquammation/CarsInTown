@@ -278,6 +278,9 @@ static void checkPriority(Buffer* buffer, Spy spy0, int frontDist) {
 				}
 	
 				case CELL_YIELD: {
+					if (spy->dist == 1) // car is running red light
+						break;
+
 					if (((cell >> 6) & 0x3) == spy->oppDir) {
 						/**
 						 * TODO: skip block and continue with others
@@ -318,11 +321,9 @@ static void checkPriority(Buffer* buffer, Spy spy0, int frontDist) {
 
 				float carExitDist = (float)frontDist - buffer->car.step + 2 + (CAR_WIDTH/2);
 
-				float sideEntryDist = (float)spy->dist - other->step +
-					(1 - CAR_WIDTH/2);
+				float sideEntryDist = (float)spy->dist - other->step - CAR_WIDTH/2;
 
-				float sideExitDist = (float)spy->dist - other->step + 2 + CAR_WIDTH/2;
-
+				float sideExitDist = (float)spy->dist - other->step + 1 + CAR_WIDTH/2;
 
 
 				float fastAcc = computeAcceleration(
@@ -339,6 +340,7 @@ static void checkPriority(Buffer* buffer, Spy spy0, int frontDist) {
 					buffer->car.speedLimit, other->speedLimit,
 					carEntryDist, sideExitDist, INFINITY_F
 				);
+
 
 
 				if (slowAcc == INFINITY_F) // is this case even possible?
@@ -424,6 +426,7 @@ int getDanger(Car* car) {
 		bool checkLeft;
 		bool checkRight;
 
+
 		// Check stop and priorities
 		switch (cell & 0xf) {
 			case CELL_VOID: {
@@ -459,7 +462,7 @@ int getDanger(Car* car) {
 					if (shrinkedStep > 0)
 						shrinkedStep = 0;
 
-					stopDist = (float)dist + shrinkedStep - other->step - CAR_WIDTH/2;
+					stopDist = (float)dist + shrinkedStep - bff.car.step - CAR_WIDTH/2;
 
 				} else if (otherDirection == ((spy.dir+2)%4)) {
 					return 2; // case to handle
@@ -467,8 +470,8 @@ int getDanger(Car* car) {
 				} else { // Side direction
 					stopDist = (float)dist - other->step + (
 						(1-CAR_HEIGHT)/2 - CAR_WIDTH/2);
-
 				}
+
 				appendStopDist(&bff, stopDist, SOFT_DECELERATION);
 				break;
 			}
@@ -482,6 +485,12 @@ int getDanger(Car* car) {
 			case CELL_LIGHT: {
 				checkLeft = false;
 				checkRight = true;
+
+				// Run red light
+				if (dist == 0) {
+					goto defaultDetection;
+				}
+
 				if (((cell >> 12) & 0x3) != spy.dir)
 					goto defaultDetection; // wrong light direction
 
@@ -506,12 +515,12 @@ int getDanger(Car* car) {
 
 		// Check priorities
 		if (checkRight) {
-			Spy cpy = {spy.x, spy.y, (spy.dir+1)%4}; // turn to right
+			Spy cpy = {spy.x, spy.y, (spy.dir+3)%4}; // turn to right
 			checkPriority(&bff, cpy, dist);
 		}
 		
 		if (checkLeft) {
-			Spy cpy = {spy.x, spy.y, (spy.dir+3)%4}; // turn to left
+			Spy cpy = {spy.x, spy.y, (spy.dir+1)%4}; // turn to left
 			checkPriority(&bff, cpy, dist);
 		}
 

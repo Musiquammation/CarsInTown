@@ -21,7 +21,7 @@ export class GameMap {
 		}
 	}
 
-	static readonly LIGHT_COULDOWN = 180;
+	static readonly LIGHT_COULDOWN = 75;
 
 	size: number;
 	carsToEnterGoal = 0;
