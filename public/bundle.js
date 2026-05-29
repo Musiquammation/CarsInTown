@@ -2378,7 +2378,7 @@ const LEVELS = [
         label: "rC",
         x: 15,
         y: 20,
-        spawnCount: 10,
+        spawnCount: 0,
         spawnDelay: 60,
         targets: []
       },
