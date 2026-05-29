@@ -20,7 +20,6 @@ cp -r client/public/assets draft/tmp
 cp bin/api.js draft/tmp/api.js
 cp bin/api.wasm draft/tmp/api.wasm
 cp client/dist/bundle.js draft/tmp/bundle.js
-cp client/dist/worker.js draft/tmp/worker.js
 
 # Changement de branche git
 git switch gh-pages
@@ -32,5 +31,4 @@ cp -r draft/tmp/assets public
 cp -r draft/tmp/api.js public/wasm/api.js
 cp -r draft/tmp/api.wasm public/wasm/api.wasm
 cp -r draft/tmp/bundle.js public/bundle.js
-cp -r draft/tmp/worker.js public/worker.js
 
