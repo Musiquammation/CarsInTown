@@ -19,7 +19,7 @@ cp client/index.css draft/tmp/index.css
 cp -r client/public/assets draft/tmp
 cp bin/api.js draft/tmp/api.js
 cp bin/api.wasm draft/tmp/api.wasm
-cp client/dist/bundle.js draft/tmp/bundle.js
+cp dist/bundle.js draft/tmp/bundle.js
 
 # Changement de branche git
 git switch gh-pages
