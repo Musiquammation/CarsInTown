@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Traffic 2</title>
+		<link rel="stylesheet" href="index.css">
+	</head>
+	<body>
+		<canvas id="gameCanvas"></canvas>
+		
+		<div id="gameView" class="hidden">
+			<div id="fps"></div>
+			<div id="mousePos"></div>
+			<div id="timeLeft"></div>
+			<div id="score"></div>
+			<div id="pause" class="inPause"></div>
+			<div id="zoomContainer" class="hidden">
+				<div id="zoomInc"></div>
+				<div id="zoomDec"></div>
+			</div>
+			<div id="restart"></div>
+			<div id="lightTurn">00</div>
+			<div id="handPanel"></div>
+		</div>
+
+		<div id="lightSelector" class="hidden">
+			<div class="ls-panel">
+				<div class="ls-row">
+					<label>Direction</label>
+					<select id="ls-direction"></select>
+				</div>
+				<div class="ls-row">
+					<label>Lumières</label>
+					<div class="ls-dots"></div>
+				</div>
+				<div class="ts-actions">
+					<button id="ls-cancel">Annuler</button>
+					<button id="ls-ok" class="ts-ok">OK</button>
+				</div>
+			</div>
+		</div>
+
+		<div id="turnSelector" class="hidden">
+			<div class="ts-panel">
+				<div class="ts-row" id="ts-row-0"></div>
+				<div class="ts-row" id="ts-row-1"></div>
+				<div class="ts-actions">
+				<button id="ts-cancel">Annuler</button>
+				<button id="ts-ok" class="ts-ok">OK</button>
+				</div>
+			</div>
+		</div>
+
+		<script>
+			window.IMG_ROOT_PATH = "/CarsInTown/public/";
+			window.DEBUG = false;
+			window.SLOW_FPS = false;
+			window.WASM_PATH = "/CarsInTown/public/api/api.js";
+
+			import("/CarsInTown/public/bundle.js").then(() => window.startGame());			
+		</script>
+	</body>
+</html>
