@@ -56,6 +56,12 @@ class Api {
 		await this._ready;
 	}
 
+	private enshure() {
+		if (this.module === null) {
+			throw new Error("Module is not loaded");
+		}
+	}
+
 	async init(mapSize: number) {
 		await this.ready();
 		this.mapPtr = this._init(mapSize) >> 1;
@@ -68,13 +74,14 @@ class Api {
 		this._cleanup();
 	}
 
-	async getDangers(cars: Car[], lightStep: number) {
-		await this.ready();
+	getDangers(cars: Car[], lightStep: number) {
+
+		this.enshure();
 
 		const ptr = this._reserveCars(cars.length);
 
-		const HEAP32 = this.module.HEAP32;
-		const HEAPF32 = this.module.HEAPF32;
+		let HEAP32 = this.module.HEAP32;
+		let HEAPF32 = this.module.HEAPF32;
 
 		
 		// Define cars
@@ -102,10 +109,18 @@ class Api {
 			offset += 2; // output data
 		}
 
+		const time = performance.now();
+
 		const error = this._getDangers(lightStep);
+		console.log((performance.now() - time).toFixed(1) + "ms");
+
 		if (error) {
 			throw new Error("getDangers exited " + error);
 		}
+
+		HEAP32 = this.module.HEAP32;
+		HEAPF32 = this.module.HEAPF32;
+
 
 		// Behave cars cars
 		offset = ptr >> 2;
@@ -115,35 +130,42 @@ class Api {
 			const car = cars[id];
 			const acc = HEAPF32[offset++];
 			const speedLimit = HEAPF32[offset++];
-			car.behave(speedLimit, acc);
+
+			// Misterious bug
+			try {
+				car.behave(speedLimit, acc);
+			} catch (e) {
+				console.log(id, cars.length);
+				console.error(e);
+			}
 		}
+
 	}
 
-	async addPath(
+	addPath(
 		firstDir: number,
 		srcX: number, srcY: number,
 		dstX: number, dstY: number
 	) {
-		await this.ready();
+		this.enshure();
 		return this._addPath(firstDir, srcX, srcY, dstX, dstY);
 	}
 
-	async removePath(id: number) {
-		await this.ready();
+	removePath(id: number) {
+		this.enshure();
 		return this._removePath(id);
 	}
 
-	async setRoad(idx: number, road: road_t) {
-		await this.ready();
+	setRoad(idx: number, road: road_t) {
+		this.ready().then(() => {
+			road &= ~(1<<15); // remove car mark
+			this.module.HEAP16[this.mapPtr + idx] = road;
+		});
 
-		road &= ~(1<<15); // remove car mark
-		this.module.HEAP16[this.mapPtr + idx] = road;
 	}
 
 	stepCar(id: number) {
-		if (this.module === null) {
-			throw new Error("Module is not loaded");
-		}
+		this.enshure();
 
 		const ptr = this._movePath(id);
 

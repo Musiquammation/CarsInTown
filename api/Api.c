@@ -101,11 +101,9 @@ int Api_addPath(int startDir, int srcX, int srcY, int dstX, int dstY) {
 	// Search empty pathfinding
 	int i = 0;
 	for (; i < api.path_reserved; i++) {
-		if (Path_isAlive(&api.paths[i])) {
-			continue;
+		if (!Path_isAlive(&api.paths[i])) {
+			goto makePath;
 		}
-
-		goto makePath;
 	}
 
 	// Reserve twice space (path is full)
@@ -116,8 +114,6 @@ int Api_addPath(int startDir, int srcX, int srcY, int dstX, int dstY) {
 		free(api.paths);
 		api.paths = newPaths;
 		api.path_reserved = nextReserved;
-
-		i = api.path_reserved;
 	}
 
 

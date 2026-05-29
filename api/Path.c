@@ -217,14 +217,17 @@ bool Path_make(Path *path, int startDir, int srcX, int srcY, int dstX, int dstY)
 	path->steps  = NULL;
 	path->length = 0;
 	path->step = 0;
-
+	
 	int size = api.map_size;
 
 	/* best g-cost reached per (x, y, dir) state */
 	float *best = malloc(size * size * 4 * sizeof(float));
-	if (!best) return false;
+	if (!best) {return false;}
+
 	for (int i = 0; i < size * size * 4; i++)
 		best[i] = 1e30f;
+
+
 
 	/* closed list: settled nodes kept for path reconstruction */
 	int     closed_cap  = 256;
@@ -234,6 +237,7 @@ bool Path_make(Path *path, int startDir, int srcX, int srcY, int dstX, int dstY)
 
 	/* open set: min-heap on f */
 	Heap open = { NULL, 0, 0 };
+
 
 	/* seed the start node */
 	ANode *start = malloc(sizeof(ANode));
@@ -245,9 +249,11 @@ bool Path_make(Path *path, int startDir, int srcX, int srcY, int dstX, int dstY)
 	start->dir    = startDir;
 	start->parent = -1;
 	heap_push(&open, start);
-	best[visited_idx(srcX, srcY, startDir, size)] = 0.0f;
+	int srcIdx = visited_idx(srcX, srcY, startDir, size);
+	best[srcIdx] = 0.0f;
 
 	bool found = false;
+
 
 	while (open.size > 0) {
 		ANode *cur = heap_pop(&open);
@@ -330,8 +336,10 @@ bool Path_make(Path *path, int startDir, int srcX, int srcY, int dstX, int dstY)
 			float ng = cur->g + step_cost;
 
 			int vi = visited_idx(nx, ny, d, size);
-			if (ng >= best[vi]) continue; /* a better path already exists */
-			best[vi] = ng;
+			if (vi < 0 || vi >= size * size * 4) {
+				continue;
+			}
+			if (ng >= best[vi]) continue;
 
 			ANode *nb = malloc(sizeof(ANode));
 			if (!nb) goto cleanup;
@@ -355,6 +363,7 @@ cleanup:
 	free(closed);
 
 	free(best);
+
 	return found;
 }
 

@@ -21,8 +21,8 @@ static const float CAR_HEIGHT = .6f;
 static const float SPEED_LIMIT_FACTOR = 0.01f;
 static const float INFINITY_F = 3e30f;
 
-static const int FRONT_RANGE = 64;
-static const int PRIORITY_RANGE = 32;
+static const int FRONT_RANGE = 24;
+static const int PRIORITY_RANGE = 24;
 static const float SOFT_DECELERATION = .002f;
 static const float FRONT_DECELERATION = .009f;
 static const float MAX_ACCELERATION = .003f;
@@ -345,7 +345,7 @@ static void checkPriority(Buffer* buffer, Spy spy0, int frontDist) {
 			checkCar:
 			if (cell & (1<<15)) {
 				Car* other = getCar(spy->x, spy->y);
-				if (other == buffer->carPtr)
+				if (other == NULL || other == buffer->carPtr)
 					goto nextSpy;
 
 				if (other->direction != spy->oppDir)

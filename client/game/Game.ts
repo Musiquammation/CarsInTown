@@ -487,7 +487,7 @@ export class Game extends GameState {
 		// Behave cars
 		gmap.updateCars();
 
-		await gmap.updateTargets();
+		gmap.updateTargets();
 		gmap.removeCarMarks();
 		gmap.moveCars();
 

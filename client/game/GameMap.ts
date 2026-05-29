@@ -170,7 +170,7 @@ export class GameMap {
 	}
 
 
-	private async searchTargetSpawner(
+	private searchTargetSpawner(
 		srcX: number, srcY: number,
 		dstX: number, dstY: number
 	) {
@@ -212,7 +212,7 @@ export class GameMap {
 				((road & (1 << 15)) !== 0)
 			) {continue;}
 
-			const pathId = await api.addPath(
+			const pathId = api.addPath(
 				c.dir, c.sx, c.sy, dstX, dstY);
 
 			if (pathId >= 0) {
@@ -229,7 +229,7 @@ export class GameMap {
 		return null;
 	}
 
-	async updateTargets() {
+	updateTargets() {
 		for (const [_, target] of this.targets) {
 			if (!target.desiresSpawn())
 				continue;
@@ -239,7 +239,7 @@ export class GameMap {
 			if (dst === null)
 				continue;
 
-			const spawner = await this.searchTargetSpawner(
+			const spawner = this.searchTargetSpawner(
 				target.x, target.y, dst.x, dst.y);
 
 			if (spawner === null) {
