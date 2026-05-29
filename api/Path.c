@@ -6,12 +6,13 @@
 #include "PathStep.h"
 #include "cell_t.h"
 #include "CellTypeEnum.h"
+#include "roadconsts.h"
 
 
 /* ── bit-field helpers ─────────────────────────────────────── */
 
 #define CELL_TYPE(c)          ((c) & 0xF)
-#define ROAD_WEIGHT(c)        (((c) >> 8) & 0xFF)
+#define ROAD_WEIGHT(c)        (((c) >> 8) & 0x7f)
 #define DIR_FIRST_SIDE(c)     (((c) >> 4) & 0x7)
 #define DIR_SECOND_SIDE(c)    (((c) >> 7) & 0x7)
 #define DIR_FIRST_DIR(c)      (((c) >> 10) & 0x3)
@@ -32,20 +33,6 @@ static cell_t cellAt(int x, int y) {
 }
 
 
-/* ── cost helpers ──────────────────────────────────────────── */
-
-static float evalCost(int weight) {
-	(void)weight;
-	return 1.0f;
-}
-
-static float nonRoadCost_cached = -1.0f;
-
-static float getNonRoadCost(void) {
-	if (nonRoadCost_cached < 0.0f)
-		nonRoadCost_cached = evalCost(40);
-	return nonRoadCost_cached;
-}
 
 
 /* ── direction helpers ─────────────────────────────────────── */
@@ -248,8 +235,6 @@ void Path_setup(void) {
 
 	s_chain_cap  = area;
 	s_chain      = malloc(s_chain_cap  * sizeof(int));
-
-	nonRoadCost_cached = -1.0f;
 }
 
 void Path_cleanup(void) {
@@ -424,8 +409,8 @@ bool Path_make(Path *path, int startDir, int srcX, int srcY, int dstX, int dstY)
 			if (ntype == CELL_VOID) continue;
 
 			float step_cost = (ntype == CELL_ROAD)
-				? evalCost((int)ROAD_WEIGHT(ncell))
-				: getNonRoadCost();
+				? getPathCost((int)ROAD_WEIGHT(ncell))
+				: getPathCost(-1);
 
 			float ng = s_closed[cur_idx].g + step_cost;
 

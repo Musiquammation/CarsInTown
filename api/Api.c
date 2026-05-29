@@ -3,6 +3,7 @@
 #include "Path.h"
 #include "cell_t.h"
 #include "getDanger.h"
+#include "roadconsts.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -71,9 +72,27 @@ int Api_getDangers(int lightStep) {
 
 	const Car* end = api.cars + api.cars_length;
 	
-	// Add marks
-	for (Car* car = api.cars; car < end; car++)
-		api.map[car->y * api.map_size + car->x] |= (1<<15);
+	// Add marks and speed costs
+	for (Car* car = api.cars; car < end; car++) {
+		if (car->x < 0 || car->y < 0 ||
+			car->x >= api.map_size || car->y >= api.map_size
+		) {continue;}
+
+		cell_t* cell = &api.map[
+			car->y * api.map_size + car->x
+		];
+		
+		cell_t flag = (1<<15);
+
+		// Road
+		if (((*cell) & 0xf) == 1) {
+			int cost = getRoadCost(car->speed);
+			flag |= cost << 8;
+		}
+
+		*cell |= flag;
+
+	}
 
 	// Sort cars by (x, y)
 	qsort(
@@ -94,8 +113,22 @@ int Api_getDangers(int lightStep) {
 
 
 	// Remove marks
-	for (Car* car = api.cars; car < end; car++)
-		api.map[car->y * api.map_size + car->x] &= ~(1<<15);
+	for (Car* car = api.cars; car < end; car++) {
+		if (car->x < 0 || car->y < 0 ||
+			car->x >= api.map_size || car->y >= api.map_size
+		) {continue;}
+
+
+		cell_t* cell = &api.map[
+			car->y * api.map_size + car->x
+		];
+
+		cell_t flag = (cell_t)~(1<<15);
+		if (((*cell) & 0xf) == 1) {
+			flag &= ~(0x7f << 8);
+		}
+		api.map[car->y * api.map_size + car->x] &= flag;
+	}
 
 	return error;
 }
