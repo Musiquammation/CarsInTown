@@ -58,7 +58,7 @@
 			window.SLOW_FPS = false;
 			window.WASM_PATH = "CarsInTown/public/api";
 
-			
+			import("/CarsInTown/public/bundle.js").then(() => window.startGame());			
 		</script>
 	</body>
 </html>
