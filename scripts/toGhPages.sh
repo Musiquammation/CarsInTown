@@ -17,8 +17,8 @@ mkdir -p draft/tmp
 cp client/index.html draft/tmp/index.html
 cp client/index.css draft/tmp/index.css
 cp -r client/public/assets draft/tmp
-cp client/wasm/api.js draft/tmp/api.js
-cp client/wasm/api.wasm draft/tmp/api.wasm
+cp bin/api.js draft/tmp/api.js
+cp bin/api.wasm draft/tmp/api.wasm
 cp client/dist/bundle.js draft/tmp/bundle.js
 cp client/dist/worker.js draft/tmp/worker.js
 
