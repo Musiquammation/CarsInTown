@@ -158,7 +158,7 @@ const LEVELS: MapConstructor[] = [
 				label: "rB",
 				x: 30, y: 15,
 				spawnCount: 0,
-				spawnDelay: 1,
+				spawnDelay: 12000000,
 				targets: ["rC"]
 			},
 

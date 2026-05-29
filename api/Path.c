@@ -309,7 +309,6 @@ static bool reconstruct(Path *path, int last_idx, int dstX, int dstY) {
 
 
 /* ── Path_make ─────────────────────────────────────────────── */
-
 bool Path_make(Path *path, int startDir, int srcX, int srcY, int dstX, int dstY) {
 	path->steps  = NULL;
 	path->length = 0;

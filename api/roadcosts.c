@@ -1,41 +1,44 @@
 #include "roadconsts.h"
 
 
-static const float MAX_SPEED = 1.1f;
-static const float GAMMA = 9.0f;
-
-static int opti_max = -1;
-static int opti_zero = -1;
+static const float MAX_SPEED = 0.15f;
+static const float GAMMA = 25.0f;
+static const int BOUND = 125;
 
 
 static int evalRoadConst(float x) {
-    static const float INV_GAMMA = 1/GAMMA;
-    static const float M = (1-INV_GAMMA) / MAX_SPEED;
-    
-    float y = M * x + INV_GAMMA;
-    return (int)(y*125);
+	static const float INV_GAMMA = 1/GAMMA;
+	static const float M = (1-INV_GAMMA) / MAX_SPEED;
+	
+	float y = 1 - M * x;
+	return (int)(y*BOUND);
+}
+
+static int getMax() {
+	static int opti = -1;
+	
+	if (opti >= 0)
+		return opti;
+
+	opti = evalRoadConst(MAX_SPEED);
+	return opti;  
 }
 
 int getRoadCost(float speed) {
-    if (speed >= MAX_SPEED) {
-        if (opti_max >= 0) {return opti_max;}
-        opti_max = evalRoadConst(MAX_SPEED);
-        return opti_max;
-    }
+	if (speed >= MAX_SPEED) {
+		return getMax();
+	}
 
-    if (speed <= 0.0f) {
-        if (opti_zero >= 0) {return opti_zero;}
-        opti_zero = evalRoadConst(0);
-        return opti_zero;
-    }
+	if (speed <= 0.0f) {
+		return BOUND;
+	}
 
-    return evalRoadConst(speed);
+	return evalRoadConst(speed);
 }
 
 
-
 int getPathCost(int cost) {
-    if (cost == 0) {return opti_zero;}
-    if (cost < 0) {return 2*opti_zero;}
-    return cost;
+	if (cost == 0) {return getMax();}
+	if (cost < 0) {return getMax();}
+	return cost;
 }

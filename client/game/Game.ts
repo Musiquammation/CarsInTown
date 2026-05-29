@@ -479,16 +479,21 @@ export class Game extends GameState {
 
 	}
 
-	async runCars() {
+	runCars() {
 		const gmap = this.gameMap;
 		if (!gmap)
 			return;
 
-		// Behave cars
+		gmap.apiSetupCars();
+
 		gmap.updateCars();
 
 		gmap.updateTargets();
+
 		gmap.removeCarMarks();
+
+		gmap.apiCleanupCars();
+
 		gmap.moveCars();
 
 

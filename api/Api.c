@@ -56,6 +56,8 @@ int* Api_reserveCars(int length) {
 	return (int*)api.cars;
 }
 
+
+
 static int compareCarXY(const void *a, const void *b) {
 	const Car* carA = a;
 	const Car* carB = b;
@@ -67,11 +69,10 @@ static int compareCarXY(const void *a, const void *b) {
 	return 0;
 }
 
-int Api_getDangers(int lightStep) {
-	api.lightStep = lightStep;
 
+void Api_setupCars() {
 	const Car* end = api.cars + api.cars_length;
-	
+
 	// Add marks and speed costs
 	for (Car* car = api.cars; car < end; car++) {
 		if (car->x < 0 || car->y < 0 ||
@@ -101,16 +102,10 @@ int Api_getDangers(int lightStep) {
 		sizeof(Car),
 		compareCarXY
 	);
+}
 
-	// Call getDanger
-	int error = 0;
-	for (Car* car = api.cars; car < end; car++) {
-		error = getDanger(car);
-		if (error) {
-			break;
-		}
-	}
-
+void Api_cleanupCars() {
+	const Car* end = api.cars + api.cars_length;
 
 	// Remove marks
 	for (Car* car = api.cars; car < end; car++) {
@@ -127,7 +122,23 @@ int Api_getDangers(int lightStep) {
 		if (((*cell) & 0xf) == 1) {
 			flag &= ~(0x7f << 8);
 		}
-		api.map[car->y * api.map_size + car->x] &= flag;
+		*cell &= flag;
+	}
+}
+
+
+int Api_getDangers(int lightStep) {
+	api.lightStep = lightStep;
+
+	const Car* end = api.cars + api.cars_length;
+	
+	// Call getDanger
+	int error = 0;
+	for (Car* car = api.cars; car < end; car++) {
+		error = getDanger(car);
+		if (error) {
+			break;
+		}
 	}
 
 	return error;

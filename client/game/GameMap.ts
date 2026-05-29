@@ -265,6 +265,14 @@ export class GameMap {
 		}
 	}
 
+	apiSetupCars() {
+		api.setupCars(this.cars);
+	}
+	
+	apiCleanupCars() {
+		api.cleanupCars();
+	}
+
 	updateCars() {
 		api.getDangers(this.cars, this.lightTick);
 	}

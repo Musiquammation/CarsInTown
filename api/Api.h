@@ -26,6 +26,8 @@ extern Api api;
 cell_t* Api_init(int mapSize);
 void Api_cleanup();
 int* Api_reserveCars(int length);
+void Api_setupCars();
+void Api_cleanupCars();
 int Api_getDangers(int lightStep);
 int Api_addPath(int startDir, int srcX, int srcY, int dstX, int dstY);
 void Api_removePath(int id);

@@ -16,12 +16,15 @@ class Api {
 	private _removePath!: (id: number) => void;
 	private _movePath!: (id: number) => number;
 	private _cleanup!: () => void;
+	private _setupCars!: () => void;
+	private _cleanupCars!: () => void;
 
 	private _ready: Promise<void>;
 	private _resolveReady!: () => void;
 
 	private module: any = null;
 	private mapPtr = -1;
+	private carsPtr = -1;
 
 	constructor() {
 		this._ready = new Promise((resolve) => {
@@ -45,6 +48,9 @@ class Api {
 			"number", ["number"]);
 
 		this._cleanup = module.cwrap("Api_cleanup", null, []);
+
+		this._setupCars = module.cwrap("Api_setupCars", null, []);
+		this._cleanupCars = module.cwrap("Api_cleanupCars", null, []);
 		
 		this.module = module;
 
@@ -74,15 +80,14 @@ class Api {
 		this._cleanup();
 	}
 
-	getDangers(cars: Car[], lightStep: number) {
-
+	setupCars(cars: Car[]) {
 		this.enshure();
 
 		const ptr = this._reserveCars(cars.length);
+		this.carsPtr = ptr;
 
-		let HEAP32 = this.module.HEAP32;
-		let HEAPF32 = this.module.HEAPF32;
-
+		const HEAP32 = this.module.HEAP32;
+		const HEAPF32 = this.module.HEAPF32;
 		
 		// Define cars
 		let offset = ptr >> 2;
@@ -109,6 +114,16 @@ class Api {
 			offset += 2; // output data
 		}
 
+		this._setupCars();
+	}
+	
+	cleanupCars() {
+		this.enshure();
+		this._cleanupCars();
+	}
+
+	getDangers(cars: Car[], lightStep: number) {
+		this.enshure();
 
 		const error = this._getDangers(lightStep);
 
@@ -116,12 +131,12 @@ class Api {
 			throw new Error("getDangers exited " + error);
 		}
 
-		HEAP32 = this.module.HEAP32;
-		HEAPF32 = this.module.HEAPF32;
+		const HEAP32 = this.module.HEAP32;
+		const HEAPF32 = this.module.HEAPF32;
 
 
-		// Behave cars cars
-		offset = ptr >> 2;
+		// Behave cars
+		let offset = this.carsPtr >> 2;
 		for (let i = 0; i < cars.length; i++) {
 			offset += 8; // input data
 			const id = HEAP32[offset++];
