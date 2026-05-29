@@ -109,10 +109,8 @@ class Api {
 			offset += 2; // output data
 		}
 
-		const time = performance.now();
 
 		const error = this._getDangers(lightStep);
-		console.log((performance.now() - time).toFixed(1) + "ms");
 
 		if (error) {
 			throw new Error("getDangers exited " + error);

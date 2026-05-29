@@ -28,10 +28,14 @@ cell_t* Api_init(int mapSize) {
 	api.cars_length = 0;
 	api.map_size = mapSize;
 
+	Path_setup();
+
 	return api.map;
 }
 
 void Api_cleanup() {
+	Path_cleanup();
+
 	for (int i = 0; i < api.path_reserved; i++) {
 		Path_destroy(&api.paths[i]);
 	}

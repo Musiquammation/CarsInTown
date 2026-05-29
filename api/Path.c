@@ -5,8 +5,6 @@
 #include "Api.h"
 #include "PathStep.h"
 #include "cell_t.h"
-
-
 #include "CellTypeEnum.h"
 
 
@@ -28,10 +26,8 @@ static const int DX[4] = {  1,  0, -1,  0 };
 static const int DY[4] = {  0, -1,  0,  1 };
 
 static cell_t cellAt(int x, int y) {
-	if (x < 0 || y < 0 || x >= api.map_size || y >= api.map_size) {
-        return 0; 
-    }
-	
+	if (x < 0 || y < 0 || x >= api.map_size || y >= api.map_size)
+		return 0;
 	return api.map[y * api.map_size + x];
 }
 
@@ -50,6 +46,7 @@ static float getNonRoadCost(void) {
 		nonRoadCost_cached = evalCost(40);
 	return nonRoadCost_cached;
 }
+
 
 /* ── direction helpers ─────────────────────────────────────── */
 
@@ -85,40 +82,118 @@ static int sideToAbsDirMask(int side, int facing) {
 	}
 }
 
+
 /* ── A* node ───────────────────────────────────────────────── */
 
 typedef struct {
-	float g;        /* cost from start                    */
-	float f;        /* g + heuristic                      */
+	float g;        /* cost from start                   */
+	float f;        /* g + heuristic                     */
 	int   x, y;
-	int   dir;      /* direction when arriving at (x, y)  */
-	int   parent;   /* index in closed list, -1 = none    */
+	int   dir;      /* direction when arriving at (x,y)  */
+	int   parent;   /* index in closed list, -1 = none   */
 } ANode;
 
-/* ── min-heap ordered by f ─────────────────────────────────── */
+
+/* ── static persistent buffers (allocated in Path_setup) ───── */
+
+/* best g-cost per (x, y, dir) state */
+static float  *s_best        = NULL;
+
+/* closed list: array of ANode values (not pointers) */
+static ANode  *s_closed      = NULL;
+static int     s_closed_cap  = 0;
+
+/* node pool: pre-allocated ANode objects reused each call */
+static ANode  *s_pool        = NULL;
+static int     s_pool_cap    = 0;
+static int     s_pool_used   = 0;
+
+/* open heap: array of pointers into s_pool */
+static ANode **s_heap_data   = NULL;
+static int     s_heap_cap    = 0;
+
+/* chain buffer used in reconstruct() */
+static int    *s_chain       = NULL;
+static int     s_chain_cap   = 0;
+
+
+/* ── helpers to grow static buffers ────────────────────────── */
+
+static bool ensure_closed(int needed) {
+	if (needed <= s_closed_cap)
+		return true;
+	int newcap = s_closed_cap ? s_closed_cap * 2 : 256;
+	while (newcap < needed) newcap *= 2;
+	ANode *nd = realloc(s_closed, newcap * sizeof(ANode));
+	if (!nd) return false;
+	s_closed     = nd;
+	s_closed_cap = newcap;
+	return true;
+}
+
+static bool ensure_pool(int needed) {
+	if (needed <= s_pool_cap)
+		return true;
+	int newcap = s_pool_cap ? s_pool_cap * 2 : 256;
+	while (newcap < needed) newcap *= 2;
+	ANode *nd = realloc(s_pool, newcap * sizeof(ANode));
+	if (!nd) return false;
+	s_pool     = nd;
+	s_pool_cap = newcap;
+	return true;
+}
+
+static bool ensure_heap(int needed) {
+	if (needed <= s_heap_cap)
+		return true;
+	int newcap = s_heap_cap ? s_heap_cap * 2 : 256;
+	while (newcap < needed) newcap *= 2;
+	ANode **nd = realloc(s_heap_data, newcap * sizeof(ANode *));
+	if (!nd) return false;
+	s_heap_data = nd;
+	s_heap_cap  = newcap;
+	return true;
+}
+
+static bool ensure_chain(int needed) {
+	if (needed <= s_chain_cap)
+		return true;
+	int newcap = s_chain_cap ? s_chain_cap * 2 : 256;
+	while (newcap < needed) newcap *= 2;
+	int *nd = realloc(s_chain, newcap * sizeof(int));
+	if (!nd) return false;
+	s_chain     = nd;
+	s_chain_cap = newcap;
+	return true;
+}
+
+
+/* ── node pool alloc ───────────────────────────────────────── */
+
+static ANode *pool_alloc(void) {
+	if (!ensure_pool(s_pool_used + 1))
+		return NULL;
+	return &s_pool[s_pool_used++];
+}
+
+
+/* ── min-heap ordered by f (operates on s_heap_data) ──────── */
 
 typedef struct {
-	ANode **data;
-	int     size;
-	int     cap;
+	int size;
 } Heap;
 
 static bool heap_push(Heap *h, ANode *n) {
-	if (h->size == h->cap) {
-		int newcap = h->cap ? h->cap * 2 : 64;
-		ANode **nd = realloc(h->data, newcap * sizeof(ANode*));
-		if (!nd) return false;
-		h->data = nd;
-		h->cap  = newcap;
-	}
+	if (!ensure_heap(h->size + 1))
+		return false;
 	int i = h->size++;
-	h->data[i] = n;
+	s_heap_data[i] = n;
 	while (i > 0) {
 		int p = (i - 1) / 2;
-		if (h->data[p]->f <= h->data[i]->f) break;
-		ANode *tmp  = h->data[p];
-		h->data[p]  = h->data[i];
-		h->data[i]  = tmp;
+		if (s_heap_data[p]->f <= s_heap_data[i]->f) break;
+		ANode *tmp       = s_heap_data[p];
+		s_heap_data[p]   = s_heap_data[i];
+		s_heap_data[i]   = tmp;
 		i = p;
 	}
 	return true;
@@ -126,21 +201,22 @@ static bool heap_push(Heap *h, ANode *n) {
 
 static ANode *heap_pop(Heap *h) {
 	if (!h->size) return NULL;
-	ANode *top  = h->data[0];
-	h->data[0]  = h->data[--h->size];
+	ANode *top     = s_heap_data[0];
+	s_heap_data[0] = s_heap_data[--h->size];
 	int i = 0;
 	for (;;) {
 		int l = 2*i+1, r = 2*i+2, best = i;
-		if (l < h->size && h->data[l]->f < h->data[best]->f) best = l;
-		if (r < h->size && h->data[r]->f < h->data[best]->f) best = r;
+		if (l < h->size && s_heap_data[l]->f < s_heap_data[best]->f) best = l;
+		if (r < h->size && s_heap_data[r]->f < s_heap_data[best]->f) best = r;
 		if (best == i) break;
-		ANode *tmp      = h->data[i];
-		h->data[i]      = h->data[best];
-		h->data[best]   = tmp;
+		ANode *tmp        = s_heap_data[i];
+		s_heap_data[i]    = s_heap_data[best];
+		s_heap_data[best] = tmp;
 		i = best;
 	}
 	return top;
 }
+
 
 /* ── visited index: (x, y, dir) → flat index ──────────────── */
 
@@ -148,41 +224,77 @@ static inline int visited_idx(int x, int y, int dir, int size) {
 	return (y * size + x) * 4 + dir;
 }
 
+
+/* ── Path_setup / Path_cleanup ─────────────────────────────── */
+
+void Path_setup(void) {
+	int size    = api.map_size;
+	int states  = size * size * 4;
+
+	/* best-cost table: one float per (x,y,dir) state */
+	s_best = malloc(states * sizeof(float));
+
+	/* initial capacities proportional to map area */
+	int area = size * size;
+
+	s_closed_cap = area;
+	s_closed     = malloc(s_closed_cap * sizeof(ANode));
+
+	s_pool_cap   = area;
+	s_pool       = malloc(s_pool_cap   * sizeof(ANode));
+
+	s_heap_cap   = area;
+	s_heap_data  = malloc(s_heap_cap   * sizeof(ANode *));
+
+	s_chain_cap  = area;
+	s_chain      = malloc(s_chain_cap  * sizeof(int));
+
+	nonRoadCost_cached = -1.0f;
+}
+
+void Path_cleanup(void) {
+	free(s_best);       s_best       = NULL;
+	free(s_closed);     s_closed     = NULL;
+	free(s_pool);       s_pool       = NULL;
+	free(s_heap_data);  s_heap_data  = NULL;
+	free(s_chain);      s_chain      = NULL;
+
+	s_closed_cap = s_pool_cap = s_heap_cap = s_chain_cap = 0;
+}
+
+
 /* ── path reconstruction ───────────────────────────────────── */
 
 /*
  * Walk the closed list back from last_idx and build path->steps.
- * Only records steps where the direction changes, plus:
- *   - the first step  (departure)
- *   - the last step   (arrival, forced to dstX/dstY with dir = -1)
+ * Records direction-change waypoints, the departure, and the arrival.
  */
-static bool reconstruct(Path *path, ANode **closed, int last_idx,
-						 int dstX, int dstY) {
+static bool reconstruct(Path *path, int last_idx, int dstX, int dstY) {
 	/* count nodes in chain */
 	int count = 0;
-	for (int i = last_idx; i >= 0; i = closed[i]->parent)
+	for (int i = last_idx; i >= 0; i = s_closed[i].parent)
 		count++;
 
-	/* store chain indices in forward order */
-	int *chain = malloc(count * sizeof(int));
-	if (!chain) return false;
+	/* store chain indices in forward order using s_chain */
+	if (!ensure_chain(count)) return false;
 	{
 		int k = count - 1;
-		for (int i = last_idx; i >= 0; i = closed[i]->parent)
-			chain[k--] = i;
+		for (int i = last_idx; i >= 0; i = s_closed[i].parent)
+			s_chain[k--] = i;
 	}
 
-	/* count how many steps to allocate */
+	/* count steps to allocate */
 	int nsteps = 0;
 	for (int k = 0; k < count; k++) {
 		if (k == 0 || k == count - 1)
 			nsteps++;
-		else if (closed[chain[k]]->dir != closed[chain[k-1]]->dir)
+		else if (s_closed[s_chain[k]].dir != s_closed[s_chain[k-1]].dir)
 			nsteps++;
 	}
 
+	/* path->steps is the only malloc we keep per Path_make call */
 	path->steps = malloc(nsteps * sizeof(PathStep));
-	if (!path->steps) { free(chain); return false; }
+	if (!path->steps) return false;
 	path->length = nsteps;
 
 	int s = 0;
@@ -193,55 +305,48 @@ static bool reconstruct(Path *path, ANode **closed, int last_idx,
 			path->steps[s].dir = -1;
 			s++;
 		} else if (k == 0) {
-			path->steps[s].x   = closed[chain[k]]->x;
-			path->steps[s].y   = closed[chain[k]]->y;
-			path->steps[s].dir = closed[chain[k]]->dir;
+			path->steps[s].x   = s_closed[s_chain[k]].x;
+			path->steps[s].y   = s_closed[s_chain[k]].y;
+			path->steps[s].dir = s_closed[s_chain[k]].dir;
 			s++;
-		} else if (closed[chain[k]]->dir != closed[chain[k-1]]->dir) {
+		} else if (s_closed[s_chain[k]].dir != s_closed[s_chain[k-1]].dir) {
 			/* direction changes: record the cell where the turn happens (k-1)
-			with the new outgoing direction (k) */
-			path->steps[s].x   = closed[chain[k-1]]->x;
-			path->steps[s].y   = closed[chain[k-1]]->y;
-			path->steps[s].dir = closed[chain[k]]->dir;
+			 * with the new outgoing direction (k) */
+			path->steps[s].x   = s_closed[s_chain[k-1]].x;
+			path->steps[s].y   = s_closed[s_chain[k-1]].y;
+			path->steps[s].dir = s_closed[s_chain[k]].dir;
 			s++;
 		}
 	}
 
-	free(chain);
 	return true;
 }
+
 
 /* ── Path_make ─────────────────────────────────────────────── */
 
 bool Path_make(Path *path, int startDir, int srcX, int srcY, int dstX, int dstY) {
 	path->steps  = NULL;
 	path->length = 0;
-	path->step = 0;
-	
-	int size = api.map_size;
+	path->step   = 0;
 
-	/* best g-cost reached per (x, y, dir) state */
-	float *best = malloc(size * size * 4 * sizeof(float));
-	if (!best) {return false;}
+	int size   = api.map_size;
+	int states = size * size * 4;
 
-	for (int i = 0; i < size * size * 4; i++)
-		best[i] = 1e30f;
+	/* reset best-cost table */
+	for (int i = 0; i < states; i++)
+		s_best[i] = 1e30f;
 
-
-
-	/* closed list: settled nodes kept for path reconstruction */
-	int     closed_cap  = 256;
-	ANode **closed      = malloc(closed_cap * sizeof(ANode*));
-	if (!closed) { free(best); return false; }
+	/* reset pool and closed list */
+	s_pool_used  = 0;
 	int closed_size = 0;
 
-	/* open set: min-heap on f */
-	Heap open = { NULL, 0, 0 };
+	/* open set: min-heap, size tracked locally */
+	Heap open = { 0 };
 
-
-	/* seed the start node */
-	ANode *start = malloc(sizeof(ANode));
-	if (!start) { free(best); free(closed); return false; }
+	/* seed the start node from the pool */
+	ANode *start = pool_alloc();
+	if (!start) return false;
 	start->g      = 0.0f;
 	start->f      = (float)(abs(dstX - srcX) + abs(dstY - srcY));
 	start->x      = srcX;
@@ -249,46 +354,39 @@ bool Path_make(Path *path, int startDir, int srcX, int srcY, int dstX, int dstY)
 	start->dir    = startDir;
 	start->parent = -1;
 	heap_push(&open, start);
-	int srcIdx = visited_idx(srcX, srcY, startDir, size);
-	best[srcIdx] = 0.0f;
+	s_best[visited_idx(srcX, srcY, startDir, size)] = 0.0f;
 
 	bool found = false;
-
 
 	while (open.size > 0) {
 		ANode *cur = heap_pop(&open);
 
-		/* settle: add to closed list */
-		if (closed_size == closed_cap) {
-			closed_cap *= 2;
-			ANode **nc = realloc(closed, closed_cap * sizeof(ANode*));
-			if (!nc) goto cleanup;
-			closed = nc;
-		}
+		/* settle: copy into closed list (values, not pointers) */
+		if (!ensure_closed(closed_size + 1)) return false;
 		int cur_idx = closed_size;
-		closed[closed_size++] = cur;
+		s_closed[closed_size++] = *cur;
 
 		/* goal check */
 		if (cur->x == dstX && cur->y == dstY) {
-			found = reconstruct(path, closed, cur_idx, dstX, dstY);
-			goto cleanup;
+			found = reconstruct(path, cur_idx, dstX, dstY);
+			return found;
 		}
 
 		cell_t cell = cellAt(cur->x, cur->y);
 		int    type = CELL_TYPE(cell);
 
-		/*
-		 * Determine allowed outgoing directions from this cell.
-		 *
-		 *   VOID            : impassable, skip (should not have been enqueued)
-		 *   ROAD / TARGET
-		 *   YIELD / LIGHT   : straight only — direction cannot change here
-		 *   DIRECTION       : apply side rules for the matching dir entries;
-		 *                     if no entry matches our current direction, go straight
-		 */
 		if (type == CELL_VOID)
 			continue;
 
+		/*
+		 * Determine allowed outgoing directions from this cell.
+		 *
+		 *   VOID            : impassable, skip
+		 *   ROAD / TARGET
+		 *   YIELD / LIGHT   : straight only — direction cannot change here
+		 *   DIRECTION       : apply side rules for matching dir entries;
+		 *                     if no entry matches current direction, go straight
+		 */
 		int dir_mask = 0;
 
 		if (type == CELL_DIRECTION) {
@@ -296,7 +394,6 @@ bool Path_make(Path *path, int startDir, int srcX, int srcY, int dstX, int dstY)
 			int second_side = DIR_SECOND_SIDE(cell);
 			int first_dir   = DIR_FIRST_DIR(cell);
 			int second_dir  = DIR_SECOND_DIR(cell);
-
 
 			bool matched = false;
 			if (first_side  != 0 && first_dir  == cur->dir) {
@@ -309,9 +406,6 @@ bool Path_make(Path *path, int startDir, int srcX, int srcY, int dstX, int dstY)
 			}
 			if (!matched)
 				dir_mask = (1 << cur->dir); /* no rule for us: go straight */
-
-
-
 		} else {
 			dir_mask = (1 << cur->dir); /* ROAD, TARGET, YIELD, LIGHT: straight */
 		}
@@ -327,22 +421,21 @@ bool Path_make(Path *path, int startDir, int srcX, int srcY, int dstX, int dstY)
 			cell_t ncell = cellAt(nx, ny);
 			int    ntype = CELL_TYPE(ncell);
 
-			if (ntype == CELL_VOID) continue; /* impassable */
+			if (ntype == CELL_VOID) continue;
 
 			float step_cost = (ntype == CELL_ROAD)
 				? evalCost((int)ROAD_WEIGHT(ncell))
 				: getNonRoadCost();
 
-			float ng = cur->g + step_cost;
+			float ng = s_closed[cur_idx].g + step_cost;
 
 			int vi = visited_idx(nx, ny, d, size);
-			if (vi < 0 || vi >= size * size * 4) {
-				continue;
-			}
-			if (ng >= best[vi]) continue;
+			if (vi < 0 || vi >= states) continue;
+			if (ng >= s_best[vi]) continue;
+			s_best[vi] = ng;
 
-			ANode *nb = malloc(sizeof(ANode));
-			if (!nb) goto cleanup;
+			ANode *nb = pool_alloc();
+			if (!nb) return false;
 			nb->g      = ng;
 			nb->f      = ng + (float)(abs(dstX - nx) + abs(dstY - ny));
 			nb->x      = nx;
@@ -353,25 +446,15 @@ bool Path_make(Path *path, int startDir, int srcX, int srcY, int dstX, int dstY)
 		}
 	}
 
-cleanup:
-	for (int i = 0; i < open.size; i++)
-		free(open.data[i]);
-	free(open.data);
-
-	for (int i = 0; i < closed_size; i++)
-		free(closed[i]);
-	free(closed);
-
-	free(best);
-
-	return found;
+	return false;
 }
+
 
 /* ── Path_destroy / Path_isAlive ───────────────────────────── */
 
 void Path_destroy(Path *path) {
 	free(path->steps);
-	path->steps  = NULL;
+	path->steps = NULL;
 }
 
 bool Path_isAlive(const Path *path) {

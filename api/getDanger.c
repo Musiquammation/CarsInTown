@@ -13,6 +13,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 
 
 static const float CAR_WIDTH = .9f;
@@ -25,7 +26,7 @@ static const int FRONT_RANGE = 24;
 static const int PRIORITY_RANGE = 24;
 static const float SOFT_DECELERATION = .002f;
 static const float FRONT_DECELERATION = .009f;
-static const float MAX_ACCELERATION = .003f;
+static const float MAX_ACCELERATION = .004f;
 static const int SPEED_FACTOR = 30;
 
 
@@ -173,21 +174,80 @@ typedef struct {
 	Direction dir;
 } Spy;
 
-typedef struct SpyNode {
+typedef struct FarSpy {
 	int x;
 	int y;
 	int dist;
 	Direction dir;
 	Direction oppDir;
-	struct SpyNode* next;
-} SpyNode;
+} FarSpy;
+
+
+static struct {
+	FarSpy* spies;
+	size_t reserved;
+	size_t length;
+} farSpyPool = {
+	.spies = NULL,
+	.reserved = 0
+};
+
+
+
+
+static FarSpy* createFarSpy() {
+	static const int DECALAGE = 16;
+
+	if (farSpyPool.reserved == 0) {
+		farSpyPool.reserved = DECALAGE;
+		farSpyPool.spies = malloc(
+			farSpyPool.reserved *
+			sizeof(FarSpy)
+		);
+
+		return &farSpyPool.spies[0];
+	}
+
+	for (size_t i = 0; i < farSpyPool.length; i++) {
+		FarSpy* s = &farSpyPool.spies[i];
+		if (s->dist < 0) { // free
+			return s;
+		}
+	}
+
+	if (farSpyPool.length < farSpyPool.reserved) {
+		FarSpy* ret = &farSpyPool.spies[farSpyPool.length];
+		farSpyPool.length++;
+		return ret;
+	}
+	
+	// Allow more memory
+	int nextReserved = farSpyPool.reserved + DECALAGE;
+	FarSpy* next = malloc(nextReserved * sizeof(FarSpy));
+	memcpy(next, farSpyPool.spies, farSpyPool.reserved * sizeof(FarSpy));
+	free(farSpyPool.spies);
+	memset(&next[farSpyPool.reserved], 0, DECALAGE * sizeof(FarSpy));
+	farSpyPool.spies = next;
+	FarSpy* ret = &next[farSpyPool.reserved];
+	farSpyPool.reserved = nextReserved;
+	farSpyPool.length++;
+	return ret;
+}
+
+static void resetFarSpyPool() {
+
+}
+
+
+
+
 
 static void moveSpy(Spy* spy) {
 	spy->x += DX[spy->dir];
 	spy->y += DY[spy->dir];
 }
 
-static void moveSpyNode(SpyNode* spy) {
+static void moveSpyNode(FarSpy* spy) {
 	spy->x += DX[spy->dir];
 	spy->y += DY[spy->dir];
 }
@@ -252,7 +312,7 @@ static void appendStopDist(Buffer* bff, float dist, float deceleration) {
 /**
  * @warn cell must have CELL_DIRECTION type
  */
-static bool branchSpies(cell_t cell, SpyNode* node) {
+static bool branchSpies(cell_t cell, FarSpy* node) {
 	int side0 = (cell >> 4) & 0x7;
 	int side1 = (cell >> 7) & 0x7;
 	Direction dir0 = (cell >> 10) & 0x3;
@@ -265,7 +325,7 @@ static bool branchSpies(cell_t cell, SpyNode* node) {
 
 	/**
 	 * TODO: handle loops
-	 * 
+	 * @warn: Replicate on the same (x,y) because it moves directly
 	 * TODO: handle multiple choices => (list (x,y,dir),
 	 * then for each car call pathfinder)
 	 */
@@ -274,17 +334,25 @@ static bool branchSpies(cell_t cell, SpyNode* node) {
 	 return true;
 }
 
+
+
 static void checkPriority(Buffer* buffer, Spy spy0, int frontDist) {
-	SpyNode* head = malloc(sizeof(SpyNode));
-	head->x = spy0.x;
-	head->y = spy0.y;
-	head->dist = 0;
-	head->dir = spy0.dir;
-	head->oppDir = (spy0.dir+2)%4;
-	head->next = NULL;
+	// Create first spy
+	{
+		FarSpy* head = createFarSpy();
+		head->x = spy0.x;
+		head->y = spy0.y;
+		head->dist = 0; // init node
+		head->dir = spy0.dir;
+		head->oppDir = (spy0.dir+2)%4;
+	}
 
 	for (int count = 1; count <= PRIORITY_RANGE; count++) {
-		for (SpyNode *spy = head, *prev = NULL; spy; ) {
+		for (size_t idx = 0; idx < farSpyPool.length; idx++) {
+			FarSpy* spy = &farSpyPool.spies[idx];
+			if (spy->dist < 0)
+				continue;
+
 			spy->dist++;
 			moveSpyNode(spy);
 			bool jumpToDeleteSpy = false;
@@ -398,38 +466,18 @@ static void checkPriority(Buffer* buffer, Spy spy0, int frontDist) {
 			// Next node
 			nextSpy:
 			{
-				prev = spy;
-				spy = spy->next;
 				continue;
 			}
 	
 	
 			deleteSpy:
-			{
-				// Delete spy
-				SpyNode* next = spy->next;
-	
-				if (prev) {
-					prev->next = next;
-				} else if (next) {
-					head = next;
-				} else {
-					goto exitPriorities; // no spies left
-				}
-	
-				free(spy);
-				spy = next;
-			}
+			spy->dist = -1;
 		}
 	}
 
 
 	exitPriorities:
-	for (SpyNode* node = head; node; ) {
-		SpyNode* next = node->next;
-		free(node);
-		node = next;
-	}
+	return;
 }
 
 
@@ -605,4 +653,11 @@ int getDanger(Car* car) {
 
 
 
+
+void freeBuffers_getDanger() {
+	if (farSpyPool.reserved > 0) {
+		free(farSpyPool.spies);
+		farSpyPool.reserved = 0;
+	}
+}
 

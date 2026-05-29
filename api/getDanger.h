@@ -5,3 +5,4 @@ typedef struct Car Car;
 
 int getDanger(Car* car);
 
+void freeBuffers_getDanger();
