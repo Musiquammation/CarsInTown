@@ -1,0 +1,5 @@
+draft/
+node_modules/
+dist/
+bin/
+client/public/api
