@@ -40,7 +40,7 @@ export class LevelsState extends GameState {
 
 	exit() {
 		if (window.DEBUG) {
-			return LEVELS[1];
+			return LEVELS[0];
 			
 		} else {
 			const v = prompt(`Level? [1 to ${LEVELS.length-1}]`);
@@ -149,7 +149,7 @@ const LEVELS: MapConstructor[] = [
 			{
 				label: "rA",
 				x: 1, y: 15,
-				spawnCount: 40,
+				spawnCount: 30,
 				spawnDelay: 30,
 				targets: ["rB"]
 			},
@@ -158,7 +158,7 @@ const LEVELS: MapConstructor[] = [
 				label: "rB",
 				x: 30, y: 15,
 				spawnCount: 0,
-				spawnDelay: 12000000,
+				spawnDelay: 20,
 				targets: ["rC"]
 			},
 
@@ -173,7 +173,7 @@ const LEVELS: MapConstructor[] = [
 			{
 				label: "c+",
 				x: 16, y: 1,
-				spawnCount: 100,
+				spawnCount: 10,
 				spawnDelay: 60,
 				targets: ["c-"]
 			},
@@ -181,11 +181,193 @@ const LEVELS: MapConstructor[] = [
 			{
 				label: "c-",
 				x: 16, y: 30,
-				spawnCount: 100,
+				spawnCount: 0,
 				spawnDelay: 20,
 				targets: []
 			},
 		]
-	})
+	}),
+
+	// Level 2
+	new MapConstructor({
+		size: 32,
+
+		roads: [],
+
+		targets: [
+			{
+				label: "rA",
+				x: 1, y: 20,
+				spawnCount: 33,
+				spawnDelay: 30,
+				targets: ["rB"]
+			},
+
+			{
+				label: "rB",
+				x: 12, y: 20,
+				spawnCount: 0,
+				spawnDelay: 20,
+				targets: ["rC"]
+			},
+
+			{
+				label: "rC",
+				x: 20, y: 20,
+				spawnCount: 5,
+				spawnDelay: 20,
+				targets: ["rD"]
+			},
+
+			{
+				label: "rD",
+				x: 30, y: 20,
+				spawnCount: 0,
+				spawnDelay: 20,
+				targets: ["rE"]
+			},
+
+			{
+				label: "rE",
+				x: 30, y: 10,
+				spawnCount: 5,
+				spawnDelay: 20,
+				targets: ["rF"]
+			},
+
+			{
+				label: "rF",
+				x: 20, y: 10,
+				spawnCount: 0,
+				spawnDelay: 20,
+				targets: ["rG"]
+			},
+
+			{
+				label: "rG",
+				x: 12, y: 10,
+				spawnCount: 0,
+				spawnDelay: 20,
+				targets: ["r-"]
+			},
+
+			{
+				label: "r-",
+				x: 1, y: 10,
+				spawnCount: 0,
+				spawnDelay: 300,
+				targets: []
+			},
+
+			{
+				label: "c+",
+				x: 16, y: 1,
+				spawnCount: 18,
+				spawnDelay: 60,
+				targets: ["c-"]
+			},
+
+			{
+				label: "c-",
+				x: 16, y: 30,
+				spawnCount: 0,
+				spawnDelay: 20,
+				targets: []
+			},
+
+			{
+				label: "g0",
+				x: 6, y: 6,
+				spawnCount: 19,
+				spawnDelay: 90,
+				targets: ["g1"]
+			},
+
+			{
+				label: "g1",
+				x: 6, y: 24,
+				spawnCount: 0,
+				spawnDelay: 60,
+				targets: ["g2"]
+			},
+
+			{
+				label: "g2",
+				x: 24, y: 24,
+				spawnCount: 2,
+				spawnDelay: 60,
+				targets: ["g-"]
+			},
+
+			{
+				label: "g-",
+				x: 24, y: 6,
+				spawnCount: 0,
+				spawnDelay: 60,
+				targets: []
+			},
+		]
+	}),
+
+
+	// Level 3
+	new MapConstructor({
+		size: 32,
+
+		roads: [],
+
+		targets: [
+			{
+				label: "r+",
+				x: 1, y: 16,
+				spawnCount: 40,
+				spawnDelay: 20,
+				targets: ["rA", "rB", "rA", "rB", "rA", "rB", "rC", "r-"]
+			},
+
+			{
+				label: "rA",
+				x: 10, y: 10,
+				spawnCount: 0,
+				spawnDelay: 5,
+				targets: ["r-"]
+			},
+
+			{
+				label: "rB",
+				x: 10, y: 22,
+				spawnCount: 0,
+				spawnDelay: 5,
+				targets: ["rI", "r-"]
+			},
+
+			{
+				label: "rC",
+				x: 10, y: 30,
+				spawnCount: 0,
+				spawnDelay: 5,
+				targets: ["r-"]
+			},
+
+			{
+				label: "rI",
+				x: 20, y: 5,
+				spawnCount: 0,
+				spawnDelay: 5,
+				targets: ["r-"]
+			},
+
+			{
+				label: "r-",
+				x: 30, y: 10,
+				spawnCount: 0,
+				spawnDelay: 30,
+				targets: []
+			},
+
+			
+		]
+	}),
+	
 ];
 

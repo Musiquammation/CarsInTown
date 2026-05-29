@@ -1,6 +1,7 @@
 import { ImageLoader } from "../handler/ImageLoader";
 import { CarColor } from "./CarColor";
 import { Direction } from "./Direction"
+import { Game } from "./Game";
 import { road_t } from "./road_t"
 import { roadfn } from "./roadfn";
 
@@ -255,7 +256,7 @@ export function drawRoad(
 }
 
 
-export function onRoadRotation(road: road_t): road_t | null {
+export function onRoadRotation(road: road_t): road_t | 'target' | null {
 	switch (roadfn.getType(road)) {
 	case RoadType.YIELD: {
 		let dir = (road >> 6) & 0x3;
@@ -278,6 +279,10 @@ export function onRoadRotation(road: road_t): road_t | null {
 
 		road = (road & ~(0x3 << 12)) | (dir << 12);
 		return road;
+	}
+
+	case RoadType.TARGET: {
+		return 'target';
 	}
 
 

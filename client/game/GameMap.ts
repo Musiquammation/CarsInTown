@@ -29,7 +29,7 @@ export class GameMap {
 	
 	private grid: Uint16Array;
 	private cars = new Array<Car>();
-	private targets = new Map<bigint, Target>();
+	private targets = new Array<Target>();
 	private lightTick = 0;
 	private lightTickCooldown = 0;
 
@@ -158,7 +158,17 @@ export class GameMap {
 	
 
 	addTarget(target: Target) {
-		this.targets.set(GameMap.mapKey(target.x, target.y), target);
+		this.targets.push(target);
+	}
+
+	getTarget(x: number, y: number) {
+		for (const target of this.targets) {
+			if (target.x === x && target.y === y) {
+				return target;
+			}
+		}
+
+		return null;
 	}
 
 	runLightTick() {
@@ -230,7 +240,7 @@ export class GameMap {
 	}
 
 	updateTargets() {
-		for (const [_, target] of this.targets) {
+		for (const target of this.targets) {
 			if (!target.desiresSpawn())
 				continue;
 			
@@ -288,7 +298,7 @@ export class GameMap {
 
 
 		// Reset targets
-		for (const [_, target] of this.targets) {
+		for (const target of this.targets) {
 			target.reset();
 		}
 

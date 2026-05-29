@@ -15,6 +15,7 @@ import { onRoadRotation, onRoadEdit, RoadType } from "./roadtypes";
 import { lightSelector } from "../handler/lightSelector";
 import { api } from "./Api";
 import { turnSelector } from "./turnSelector";
+import { road_t } from "./road_t";
 
 
 const timeLeftDiv = document.getElementById("timeLeft")!;
@@ -38,7 +39,6 @@ export class Game extends GameState {
 	private lastMouseY = 0;
 	private statsPanel?: HTMLDivElement;
 	private running = true;
-
 
 
 	private placeRoad(x: number, y: number) {
@@ -191,6 +191,22 @@ export class Game extends GameState {
 		}		
 	}
 
+	private getRoadRotation(road: road_t, x: number, y: number) {
+		const r = onRoadRotation(road);
+		if (r === 'target') {
+			const t = this.gameMap!.getTarget(x, y);
+			if (t) {
+				const list = t.directions.map(i => `(${i.x}, ${i.y})`);
+				const msg = list.join(", ");
+				console.log(msg);
+				alert("Targets: " + msg);
+			}
+			return null;
+		}
+
+		return r;
+	}
+
 	enter(data: any, input: InputHandler): void {
 		const mapConstructor = data as MapConstructor;
 		api.init(mapConstructor.size);
@@ -239,11 +255,11 @@ export class Game extends GameState {
 			}
 
 
-			const applyEdit = (road: number) => {
+			const applyEdit = (road: number, ix: number, iy: number) => {
 				const next = onRoadEdit(road);
 
 				if (next === null) {
-					const rotated = onRoadRotation(road);
+					const rotated = this.getRoadRotation(road, ix, iy);
 					if (rotated) {
 						gmap.setRoad(ix, iy, rotated);
 					}
@@ -265,7 +281,7 @@ export class Game extends GameState {
 			}
 
 			if (click === 'right') {
-				applyEdit(gmap.getRoad(ix, iy));
+				applyEdit(gmap.getRoad(ix, iy), ix, iy);
 				return;
 			}
 
@@ -284,8 +300,8 @@ export class Game extends GameState {
 
 			case HandSelection.ROTATE:
 			{
-				const road = onRoadRotation(
-					gmap.getRoad(ix, iy));
+				const road = this.getRoadRotation(
+					gmap.getRoad(ix, iy), ix, iy);
 
 				if (road !== null) {
 					gmap.setRoad(ix, iy, road);
@@ -323,13 +339,13 @@ export class Game extends GameState {
 				const road = gmap.getRoad(ix, iy);
 				if (roadfn.getType(road) === roadtype) {
 					if (click === 'left') {
-						const rotated = onRoadRotation(road);
+						const rotated = this.getRoadRotation(road, ix, iy);
 						if (rotated) {
 							gmap.setRoad(ix, iy, rotated);
 						}
 
 					} else {
-						applyEdit(road);
+						applyEdit(road, ix, iy);
 					}
 
 				} else {
@@ -382,8 +398,8 @@ export class Game extends GameState {
 					runMode(smode, ix, iy, false, 'right', clientX, clientY);
 
 				} else {
-					const newRoad = onRoadRotation(
-						gmap.getRoad(ix, iy));
+					const newRoad = this.getRoadRotation(
+						gmap.getRoad(ix, iy), ix, iy);
 	
 					if (newRoad !== null)
 						gmap.setRoad(ix, iy, newRoad);
@@ -611,12 +627,12 @@ export class Game extends GameState {
 		const gmap = this.gameMap;
 		if (!gmap) {
 			timeLeftDiv.innerText = "0:00.0";
-			scoreDiv.innerText = (0).toString().padStart(3, "0");
+			scoreDiv.innerText = "0";
 			return;
 		}
 
 		const left = gmap.carsToEnterGoal - gmap.enteredCars;
-		scoreDiv.innerText =  left.toString().padStart(3, "0");
+		scoreDiv.innerText =  left.toString();
 		timeLeftDiv.innerText = this.formatTime();
 
 		lightTurnDiv.textContent = gmap.getLightTick()
