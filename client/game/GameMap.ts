@@ -271,6 +271,8 @@ export class GameMap {
 				throw new Error("Car spawned and immediately reached its target");
 			}
 
+			target.toNextStep();
+
 			this.cars.push(car);
 		}
 	}

@@ -57,13 +57,14 @@ export class Target {
 		if (this.directions.length <= 0)
 			return null;
 
-		const p = this.directions[this.step];
+		return this.directions[this.step];
+	}
+
+	toNextStep() {
 		this.step++;
 		if (this.step >= this.directions.length) {
 			this.step -= this.directions.length;
 		}
-
-		return p;
 	}
 
 
