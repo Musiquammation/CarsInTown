@@ -2042,6 +2042,7 @@ const _GameMap = class _GameMap {
       if (car.appendSubTarget() >= 2) {
         throw new Error("Car spawned and immediately reached its target");
       }
+      target.toNextStep();
       this.cars.push(car);
     }
   }
@@ -2106,12 +2107,13 @@ class Target {
   makeSpawn() {
     if (this.directions.length <= 0)
       return null;
-    const p = this.directions[this.step];
+    return this.directions[this.step];
+  }
+  toNextStep() {
     this.step++;
     if (this.step >= this.directions.length) {
       this.step -= this.directions.length;
     }
-    return p;
   }
   reset() {
     this.step = 0;
