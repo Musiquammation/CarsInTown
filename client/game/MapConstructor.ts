@@ -1,4 +1,3 @@
-import { Direction } from "./Direction";
 import { CarColor } from "./CarColor";
 import { GameMap } from "./GameMap";
 import { road_t } from "./road_t";
@@ -92,11 +91,15 @@ export class MapConstructor {
 				}
 			}
 
+			const isSpawner = i.targets.length > 0;
+
 			cmap.addTarget(t);
 			cmap.setRoad(
 				t.x,
 				t.y,
-				RoadType.TARGET | (i.color<<4) | (symbol<<7));
+				RoadType.TARGET | (i.color<<4) | (symbol<<7) |
+					(isSpawner ? (1<<12) : 0)
+			);
 		}
 
 
@@ -104,7 +107,7 @@ export class MapConstructor {
 
 
 		// Set void roads
-		const voidRoad = 1<<3;
+		const voidRoad = 1<<4;
 		const n = this.size-1;
 		for (let i = 0; i < n; i++) {
 			cmap.setRoad(i, 0, voidRoad);

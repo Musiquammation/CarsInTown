@@ -46,67 +46,8 @@ export class Game extends GameState {
 		if (!map)
 			return;
 
-		const neighbors = [
-			map.getRoad(x+1, y),
-			map.getRoad(x, y-1),
-			map.getRoad(x-1, y),
-			map.getRoad(x, y+1)
-		];
-
-		const alive: Direction[] = [];
-		for (let i = 0; i < 4; i++)
-			if (roadfn.getType(neighbors[i]))
-				alive.push(i);
-
-
-		if (alive.length === 0) {
-			map.setRoad(x, y, RoadType.ROAD);
-			return;
-		}
-
-		if (alive.length === 1) {
-			const dir = alive[0];
-			if (roadfn.getType(neighbors[dir]) != RoadType.ROAD) {
-				map.setRoad(x, y, RoadType.ROAD);
-				return;
-			}
-
-			let road = RoadType.ROAD;
-
-			const mdir = getDirectionDelta(dir);
-			const xp = x + mdir.x;
-			const yp = y + mdir.y;
-			
-			let hasRight;
-			let hasLeft;
-			
-			// Check for turn
-			{
-				const dr = getDirectionDelta(rotateDirectionToRight(dir));
-				const xr = xp + dr.x;
-				const yr = yp + dr.y;
-				hasRight = roadfn.getType(map.getRoad(xr, yr));
-	
-				const dl = getDirectionDelta(rotateDirectionToLeft(dir));
-				const xl = xp + dl.x;
-				const yl = yp + dl.y;
-				hasLeft = roadfn.getType(map.getRoad(xl, yl));
-			}
-
-
-			/// TODO: automatic directions
-
-
-			map.setRoad(x, y, road);
-			return;
-		}
-
-		if (alive.length === 2) {
-			map.setRoad(x, y, RoadType.ROAD);
-			return;
-		}
-
 		map.setRoad(x, y, RoadType.ROAD);
+		roadfn.placeRoad(map, x, y);
 	}
 
 	

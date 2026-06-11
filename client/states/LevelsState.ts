@@ -80,59 +80,24 @@ const LEVELS: MapConstructor[] = [
 		
 
 		roads: [
-			...rect(6, 1, 2, 1, 1),
-			...rect(8, 2, 1, 6, 1),
-			...rect(8, 8, 5, 1, 1),
-			...rect(1, 6, 12, 1, 1),
-			{x: 8, y: 1, data: 3 | (2<<4) | (3<<12)},
-			{x: 8, y: 5, data: 4 | (3<<6)},
-			{x: 7, y: 6, data: 1365}
-
 		],
 
 		targets: [
 			{
 				label: "r+",
-				x: 6, y: 1,
-				spawnCount: 50,
-				spawnDelay: 10,
+				x: 6, y: 10,
+				spawnCount: 50000,
+				spawnDelay: 60,
 				color: CarColor.RED,
-				targets: ["rA"]
+				targets: ["r+"]
 			},
 
-			{
-				label: "rA",
-				x: 8, y: 8,
-				spawnCount: 0,
-				spawnDelay: 15,
-				color: CarColor.RED,
-				targets: ["r-"]
-			},
-			
 			{
 				label: "r-",
-				x: 13, y: 8,
+				x: 24, y: 10,
 				spawnCount: 0,
 				spawnDelay: 15,
 				color: CarColor.RED,
-				targets: []
-			},
-
-			{
-				label: "y+",
-				x: 1, y: 6,
-				spawnCount: 50,
-				spawnDelay: 30,
-				color: CarColor.YELLOW,
-				targets: ["y-"]
-			},
-
-			{
-				label: "y-",
-				x: 13, y: 6,
-				spawnCount: 0,
-				spawnDelay: 1,
-				color: CarColor.YELLOW,
 				targets: []
 			}
 		]

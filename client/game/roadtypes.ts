@@ -9,7 +9,8 @@ import { roadfn } from "./roadfn";
 export enum RoadType {
 	/**
 	 * +00: (type)
-	 * +04: code
+	 * +04: unbreakable
+	 * +05: (empty)
 	 * +15: (taken)
 	 */
 	VOID,
@@ -29,7 +30,8 @@ export enum RoadType {
 	 * +00: (type)
 	 * +04: color
 	 * +07: symbol
-	 * +12: (empty)
+	 * +12: spawner?
+	 * +13: (empty)
 	 * +15: (taken)
 	 */
 	TARGET,
@@ -200,7 +202,7 @@ export function drawRoad(
 
 	switch (roadfn.getType(road)) {
 	case RoadType.VOID:
-		if (road & (1<<3)) {
+		if (road & (1<<4)) {
 			ctx.fillStyle = "black";
 			ctx.fillRect(0, 0, 1, 1);
 			return;

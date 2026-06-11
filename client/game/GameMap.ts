@@ -59,7 +59,7 @@ export class GameMap {
 			return;
 
 		case RoadType.VOID:
-			if (currentRoad & (1<<3))
+			if (currentRoad & (1<<4))
 				return;
 		}
 
